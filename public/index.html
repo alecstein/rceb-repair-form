@@ -642,16 +642,79 @@
       saveSetting('repairCafeVolunteerName', event.target.value);
     });
 
+    const TAXONOMY_CACHE_KEY = 'repairCafeTaxonomiesV1';
+    const TAXONOMY_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+    const taxonomyData = { products: [], brands: [] };
+
     const autocomplete = {
       itemType: {
-        input: byId('f3'), action: 'products',
+        input: byId('f3'), list: 'products',
         message: 'Choose an item type from the list.'
       },
       brand: {
-        input: byId('f4'), action: 'brands',
+        input: byId('f4'), list: 'brands',
         message: 'Choose a brand from the list or add this brand.'
       }
     };
+
+    function readTaxonomyCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(TAXONOMY_CACHE_KEY) || 'null');
+        if (!cached || !Array.isArray(cached.products) || !Array.isArray(cached.brands)) return null;
+        return cached;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveTaxonomyCache(products, brands) {
+      try {
+        localStorage.setItem(TAXONOMY_CACHE_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          products,
+          brands
+        }));
+      } catch {
+        // The form still works for this visit if persistent storage is unavailable.
+      }
+    }
+
+    async function fetchTaxonomies() {
+      const [productsResponse, brandsResponse] = await Promise.all([
+        fetch('/data/products.json', { cache: 'no-cache' }),
+        fetch('/data/brands.json', { cache: 'no-cache' })
+      ]);
+      if (!productsResponse.ok || !brandsResponse.ok) {
+        throw new Error('Could not load autocomplete lists.');
+      }
+      const [products, brands] = await Promise.all([
+        productsResponse.json(),
+        brandsResponse.json()
+      ]);
+      if (!Array.isArray(products) || !Array.isArray(brands)) {
+        throw new Error('Autocomplete lists are invalid.');
+      }
+      taxonomyData.products = products;
+      taxonomyData.brands = brands;
+      saveTaxonomyCache(products, brands);
+    }
+
+    const cachedTaxonomies = readTaxonomyCache();
+    if (cachedTaxonomies) {
+      taxonomyData.products = cachedTaxonomies.products;
+      taxonomyData.brands = cachedTaxonomies.brands;
+    }
+
+    const taxonomyReady = (async () => {
+      if (!cachedTaxonomies || Date.now() - Number(cachedTaxonomies.savedAt || 0) > TAXONOMY_MAX_AGE) {
+        try {
+          await fetchTaxonomies();
+        } catch (error) {
+          if (!cachedTaxonomies) throw error;
+          console.warn('Using cached autocomplete lists because refresh failed.', error);
+        }
+      }
+    })();
 
     for (const [kind, state] of Object.entries(autocomplete)) {
       Object.assign(state, {
@@ -677,24 +740,43 @@
       state.menu.classList.remove('open');
     }
 
+    function localMatches(values, query, limit = 20) {
+      const q = query.toLocaleLowerCase();
+      const starts = [];
+      const contains = [];
+
+      for (const value of values) {
+        const lower = value.toLocaleLowerCase();
+        if (lower.startsWith(q)) {
+          starts.push(value);
+        } else if (lower.includes(q)) {
+          contains.push(value);
+        }
+      }
+
+      return starts.concat(contains)
+        .slice(0, limit)
+        .map(value => ({ value, label: value }));
+    }
+
     async function loadAutocomplete(kind, query) {
       const state = autocomplete[kind];
       const requestId = ++state.requestId;
       const isCurrent = () => requestId === state.requestId && state.input.value.trim() === query;
+
       state.control.classList.add('loading');
+
       try {
-        const response = await fetch(`/api?action=${encodeURIComponent(state.action)}&q=${encodeURIComponent(query)}`, {
-          cache: 'no-store'
-        });
-        const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.error || 'Could not load choices.');
+        await taxonomyReady;
         if (!isCurrent()) return;
+
+        const results = localMatches(taxonomyData[state.list], query);
         state.control.classList.remove('loading');
-        renderAutocomplete(kind, data.results || [], query);
+        renderAutocomplete(kind, results, query);
       } catch (error) {
         if (!isCurrent()) return;
         state.control.classList.remove('loading');
-        showAutocompleteMessage(state, 'Could not load choices. Edit your search to try again.');
+        showAutocompleteMessage(state, 'Could not load choices. Reload the page and try again.');
       }
     }
 
