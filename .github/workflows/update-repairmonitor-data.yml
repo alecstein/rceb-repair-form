@@ -5,7 +5,7 @@ on:
     # First day of every month at 8:00 UTC
     - cron: "0 8 1 * *"
 
-  # Also gives you a "Run workflow" button in GitHub
+  # Lets you run it manually from the GitHub Actions page
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Download RepairMonitor data
+      - name: Download RepairMonitor taxonomy
         env:
           PRODUCT_URL: "https://www.repairmonitor.org/en/kind_product_autocomplete/taxonomy_term/default%3Ataxonomy_term/HnNwTT2VlSuQATdNR_eXD-f1b4Q797uTKVyIhd2Kdjk"
           BRAND_URL: "https://www.repairmonitor.org/en/brand_autocomplete/taxonomy_term/default%3Ataxonomy_term/gEOAwRaHjAqY5yzY4R7uND2yYOY1Zg_vOGhm4pd2Nsk"
@@ -34,29 +34,38 @@ jobs:
             --data-urlencode 'q= ' \
             -o /tmp/brands-raw.json
 
-      - name: Build clean taxonomy files
+      - name: Build clean JSON files
         run: |
-          jq '
-            map(.value | select(type == "string" and length > 0))
+          jq -c '
+            map(.label
+              | select(type == "string" and length > 0)
+              | select(. != "Add new product")
+            )
+            | unique
             | sort_by(ascii_downcase)
-            | group_by(ascii_downcase)
-            | map(.[0])
           ' /tmp/products-raw.json > public/data/products.json
 
-          jq '
-            map(.value | select(type == "string" and length > 0))
+          jq -c '
+            map(.label
+              | select(type == "string" and length > 0)
+              | select(. != "Add new brand")
+            )
+            | unique
             | sort_by(ascii_downcase)
-            | group_by(ascii_downcase)
-            | map(.[0])
           ' /tmp/brands-raw.json > public/data/brands.json
 
           echo "Products: $(jq length public/data/products.json)"
           echo "Brands:   $(jq length public/data/brands.json)"
 
+      - name: Sanity check
+        run: |
+          test "$(jq length public/data/products.json)" -gt 1000
+          test "$(jq length public/data/brands.json)" -gt 5000
+
       - name: Commit changes
         run: |
           if git diff --quiet -- public/data/products.json public/data/brands.json; then
-            echo "RepairMonitor data has not changed."
+            echo "RepairMonitor taxonomy has not changed."
             exit 0
           fi
 
