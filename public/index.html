@@ -1078,13 +1078,13 @@
       ];
 
       void window.confetti({
-        count: 140,
+        count: 300,
         angle: 90,
         spread: 70,
         startVelocity: 58,
         decay: 0.91,
         gravity: 0.9,
-        ticks: 300,
+        ticks: 1000,
         position: { x: 50, y: 96 },
         colors,
         shapes: ['square', 'circle'],
@@ -1097,13 +1097,13 @@
       setTimeout(() => {
         if (typeof window.confetti !== 'function') return;
         void window.confetti({
-          count: 70,
+          count: 200,
           angle: 90,
           spread: 110,
           startVelocity: 42,
           decay: 0.92,
           gravity: 0.85,
-          ticks: 280,
+          ticks: 1000,
           position: { x: 50, y: 96 },
           colors,
           shapes: ['square', 'circle'],
