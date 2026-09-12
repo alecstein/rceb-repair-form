@@ -380,31 +380,6 @@
       opacity: 1;
       transform: translate(-50%, -50%) scale(1) rotate(-3deg);
     }
-    #confettiLayer {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      overflow: hidden;
-      pointer-events: none;
-    }
-    .confetti-piece {
-      position: absolute;
-      top: -20px;
-      width: 10px;
-      height: 18px;
-      opacity: 1;
-      animation: confetti-fall 1.8s ease-out forwards;
-    }
-    @keyframes confetti-fall {
-      from {
-        transform: translateY(-20px) rotate(0deg);
-        opacity: 1;
-      }
-      to {
-        transform: translateY(105vh) rotate(720deg);
-        opacity: .2;
-      }
-    }
     form.is-submitting .form-content {
       pointer-events: none;
     }
@@ -420,9 +395,9 @@
       }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@4/tsparticles.confetti.bundle.min.js" defer></script>
 </head>
 <body>
-  <div id="confettiLayer"></div>
   <div class="saved-toast" id="savedToast">
     SUBMITTED
   </div>
@@ -576,7 +551,7 @@
           <label class="field" for="f7">
             Guest notes
             <span class="optional">(optional)</span>
-            <textarea name="f7" id="f7" autocomplete="off" writingsuggestions="false" placeholder="(Anything the guest learned or wanted to share)" ></textarea>
+            <textarea name="f7" id="f7" autocomplete="off" writingsuggestions="false" placeholder="Did they learn anything or have anything to share?" ></textarea>
           </label>
           <label class="field" for="f8">
             Tool purchase request(s)
@@ -586,7 +561,7 @@
               id="f8"
               autocomplete="off"
               writingsuggestions="false"
-              placeholder="E.g. awl, T15 Torx bit"
+              placeholder="Tools or supplies we should consider purchasing"
             ></textarea>
           </label>
           <div class="photo-block">
@@ -1083,26 +1058,60 @@
     });
 
     function celebrate() {
-      const layer = byId('confettiLayer');
       const toast = byId('savedToast');
-      const colors = ['#ffffff', '#ffdc5d', '#ff6b6b', '#8bd3a1', '#f4a7c0'];
-      layer.replaceChildren();
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        for (let i = 0; i < 60; i++) {
-          const piece = document.createElement('div');
-          piece.className = 'confetti-piece';
-          Object.assign(piece.style, {
-            left: `${Math.random() * 100}vw`,
-            background: colors[Math.floor(Math.random() * colors.length)],
-            animationDelay: `${Math.random() * .35}s`,
-            animationDuration: `${1.4 + Math.random() * .9}s`
-          });
-          layer.appendChild(piece);
-        }
-      }
+
       toast.classList.add('visible');
       setTimeout(() => toast.classList.remove('visible'), 1200);
-      setTimeout(() => layer.replaceChildren(), 2600);
+
+      if (
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+        typeof window.confetti !== 'function'
+      ) {
+        return;
+      }
+
+      // tsParticles-style cannon: fast launch, broad spread, then realistic
+      // rolling / tilting / wobbling confetti as the pieces fall.
+      const colors = [
+        '#26ccff', '#a25afd', '#ff5e7e',
+        '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'
+      ];
+
+      void window.confetti({
+        count: 140,
+        angle: 90,
+        spread: 70,
+        startVelocity: 58,
+        decay: 0.91,
+        gravity: 0.9,
+        ticks: 300,
+        position: { x: 50, y: 96 },
+        colors,
+        shapes: ['square', 'circle'],
+        scalar: 1.05,
+        zIndex: 1000,
+        disableForReducedMotion: true
+      });
+
+      // A smaller, wider second burst makes the cannon feel less uniform.
+      setTimeout(() => {
+        if (typeof window.confetti !== 'function') return;
+        void window.confetti({
+          count: 70,
+          angle: 90,
+          spread: 110,
+          startVelocity: 42,
+          decay: 0.92,
+          gravity: 0.85,
+          ticks: 280,
+          position: { x: 50, y: 96 },
+          colors,
+          shapes: ['square', 'circle'],
+          scalar: 0.85,
+          zIndex: 1000,
+          disableForReducedMotion: true
+        });
+      }, 90);
     }
   </script>
 </body>
