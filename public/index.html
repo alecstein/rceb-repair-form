@@ -31,26 +31,29 @@
       <input type="hidden" name="deviceId" id="deviceId">
       <input type="hidden" name="photoBeforeCount" id="photoBeforeCount" value="0">
       <input type="hidden" name="photoAfterCount" id="photoAfterCount" value="0">
-
       <div class="form-content">
-
         <!-- Item and guest details -->
         <section class="repair-section">
-
-          <label class="field" for="volunteerName">
-            Your name<span class="required">*</span>
-            <input
-              type="text"
-              name="volunteerName"
-              id="volunteerName"
-              list="volunteerNames"
-              autocomplete="off"
-              writingsuggestions="false"
-              placeholder="First Last"
-              required
-            >
-            <datalist id="volunteerNames"></datalist>
-          </label>
+          <div class="field">
+            <label for="volunteerName">
+              Your name<span class="required">*</span>
+            </label>
+            <div class="autocomplete-control" id="volunteerNameControl">
+              <input
+                type="text"
+                name="volunteerName"
+                id="volunteerName"
+                autocomplete="off"
+                writingsuggestions="false"
+                placeholder="First Last"
+                required
+              >
+              <div class="loading-track" aria-hidden="true">
+                <div class="loading-bar"></div>
+              </div>
+              <div class="autocomplete-menu" id="volunteerNameMenu"></div>
+            </div>
+          </div>
 
           <label class="field" for="guestName">
             Guest's name<span class="required">*</span>
@@ -66,10 +69,7 @@
           </label>
 
           <div class="field">
-            <label for="itemType">
-              Item type<span class="required">*</span>
-            </label>
-
+            <label for="itemType">Item type<span class="required">*</span></label>
             <div class="autocomplete-control" id="itemTypeControl">
               <input
                 type="text"
@@ -80,15 +80,10 @@
                 placeholder="e.g. toaster"
                 required
               >
-
               <div class="loading-track" aria-hidden="true">
                 <div class="loading-bar"></div>
               </div>
-
-              <div
-                class="autocomplete-menu"
-                id="itemTypeMenu"
-              ></div>
+              <div class="autocomplete-menu" id="itemTypeMenu"></div>
             </div>
           </div>
 
@@ -97,7 +92,6 @@
               Brand
               <span class="optional">(optional)</span>
             </label>
-
             <div class="autocomplete-control" id="brandControl">
               <input
                 type="text"
@@ -107,28 +101,17 @@
                 writingsuggestions="false"
                 placeholder="e.g. Bosch"
               >
-
-              <input
-                type="hidden"
-                name="brandStatus"
-                id="brandStatus"
-              >
-
+              <input type="hidden" name="brandStatus" id="brandStatus">
               <div class="loading-track" aria-hidden="true">
                 <div class="loading-bar"></div>
               </div>
-
-              <div
-                class="autocomplete-menu"
-                id="brandMenu"
-              ></div>
+              <div class="autocomplete-menu" id="brandMenu"></div>
             </div>
           </div>
 
           <label class="field" for="modelInfo">
             Model number or serial
             <span class="optional">(optional)</span>
-
             <input
               type="text"
               name="modelInfo"
@@ -143,180 +126,94 @@
               Pre-repair photo(s)
               <span class="optional">(optional)</span>
             </div>
-
             <div class="photo-action">
-              <button
-                type="button"
-                class="camera-button"
-                id="beforePhotoButton"
-              >
+              <button type="button" class="camera-button" id="beforePhotoButton">
                 <span class="camera-button-main">
                   📷 Add photo
                 </span>
-
                 <span class="camera-button-sub">
                   up to 5 photos
                 </span>
               </button>
             </div>
-
-            <div
-              class="photo-inputs"
-              id="beforePhotoInputs"
-            ></div>
-
-            <div
-              class="photo-previews"
-              id="beforePhotoPreviews"
-            ></div>
+            <div class="photo-inputs" id="beforePhotoInputs"></div>
+            <div class="photo-previews" id="beforePhotoPreviews"></div>
           </div>
 
           <fieldset>
-            <legend>
-              Item condition on arrival<span class="required">*</span>
-            </legend>
-
+            <legend>Item condition on arrival<span class="required">*</span></legend>
             <div class="choice-grid">
               <label class="choice">
-                <input
-                  type="radio"
-                  name="condition"
-                  value="Good"
-                  required
-                >
+                <input type="radio" name="condition" value="Good" required>
                 Good
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="condition"
-                  value="Okay"
-                >
+                <input type="radio" name="condition" value="Okay">
                 Okay
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="condition"
-                  value="Broken"
-                >
+                <input type="radio" name="condition" value="Broken">
                 Broken
               </label>
             </div>
           </fieldset>
-
         </section>
-
 
         <!-- Repair results and notes -->
         <section class="repair-section">
-
           <h2 class="section-title">Post-repair</h2>
 
           <fieldset>
-            <legend>
-              Repair outcome<span class="required">*</span>
-            </legend>
-
+            <legend>Repair outcome<span class="required">*</span></legend>
             <div class="choice-grid">
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="outcome"
-                  value="Success"
-                  required
-                >
+                <input type="radio" name="outcome" value="Success" required>
                 Success
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="outcome"
-                  value="Some improvement"
-                >
+                <input type="radio" name="outcome" value="Some improvement">
                 Some improvement
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="outcome"
-                  value="Advice given"
-                >
+                <input type="radio" name="outcome" value="Advice given">
                 Advice given
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="outcome"
-                  value="Couldn't help"
-                >
+                <input type="radio" name="outcome" value="Couldn't help">
                 Couldn't help
               </label>
-
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>
-              Guest experience<span class="required">*</span>
-            </legend>
-
+            <legend>Guest experience<span class="required">*</span></legend>
             <div class="choice-grid">
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="guestExperience"
-                  value="Great"
-                  required
-                >
+                <input type="radio" name="guestExperience" value="Great" required>
                 <span class="emoji">😃</span>
                 Great
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="guestExperience"
-                  value="Good"
-                >
+                <input type="radio" name="guestExperience" value="Good">
                 <span class="emoji">🙂</span>
                 Good
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="guestExperience"
-                  value="Neutral"
-                >
+                <input type="radio" name="guestExperience" value="Neutral">
                 <span class="emoji">😐</span>
                 Neutral
               </label>
-
               <label class="choice">
-                <input
-                  type="radio"
-                  name="guestExperience"
-                  value="Bad"
-                >
+                <input type="radio" name="guestExperience" value="Bad">
                 <span class="emoji">😞</span>
                 Bad
               </label>
-
             </div>
           </fieldset>
 
           <label class="field" for="problemSolution">
             Problem / solution description
             <span class="optional">(optional)</span>
-
             <textarea
               name="problemSolution"
               id="problemSolution"
@@ -329,7 +226,6 @@
           <label class="field" for="guestReflection">
             Guest notes
             <span class="optional">(optional)</span>
-
             <textarea
               name="guestReflection"
               id="guestReflection"
@@ -342,7 +238,6 @@
           <label class="field" for="toolPurchaseRequests">
             Tool purchase request(s)
             <span class="optional">(optional)</span>
-
             <textarea
               name="toolPurchaseRequests"
               id="toolPurchaseRequests"
@@ -357,48 +252,27 @@
               Repair photo(s)
               <span class="optional">(optional)</span>
             </div>
-
             <div class="photo-action">
-              <button
-                type="button"
-                class="camera-button"
-                id="afterPhotoButton"
-              >
+              <button type="button" class="camera-button" id="afterPhotoButton">
                 <span class="camera-button-main">
                   📷 Add photo
                 </span>
-
                 <span class="camera-button-sub">
                   up to 5 photos
                 </span>
               </button>
             </div>
-
-            <div
-              class="photo-inputs"
-              id="afterPhotoInputs"
-            ></div>
-
-            <div
-              class="photo-previews"
-              id="afterPhotoPreviews"
-            ></div>
+            <div class="photo-inputs" id="afterPhotoInputs"></div>
+            <div class="photo-previews" id="afterPhotoPreviews"></div>
           </div>
 
           <div class="submit-wrap">
-            <button
-              class="submit"
-              id="submitButton"
-              type="submit"
-            >
+            <button class="submit" id="submitButton" type="submit">
               <span>Submit</span>
             </button>
           </div>
-
           <div id="message" aria-live="polite"></div>
-
         </section>
-
       </div>
     </form>
   </main>
