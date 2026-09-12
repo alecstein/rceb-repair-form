@@ -1007,6 +1007,45 @@
       form.setAttribute('aria-busy', String(value));
     }
 
+    function makeDebugId() {
+      return (
+        window.crypto?.randomUUID?.().replace(/-/g, '').slice(0, 8) ||
+        `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+      ).toUpperCase();
+    }
+
+    function submissionError(code, debugId, message) {
+      const error = new Error(message);
+      error.code = code;
+      error.debugId = debugId;
+      return error;
+    }
+
+    async function readApiResponse(response, fallbackDebugId) {
+      const text = await response.text();
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw submissionError(
+          `HTTP_${response.status}_BAD_RESPONSE`,
+          response.headers.get('x-debug-id') || fallbackDebugId,
+          `Server returned an invalid response (HTTP ${response.status}).`
+        );
+      }
+
+      if (!response.ok || !data.ok) {
+        throw submissionError(
+          data.code || `HTTP_${response.status}`,
+          data.debugId || response.headers.get('x-debug-id') || fallbackDebugId,
+          data.error || 'Submission failed.'
+        );
+      }
+
+      return data;
+    }
+
     function handleSubmitSuccess() {
       removeCanonicalFields();
       const savedName = byId('f1').value;
@@ -1025,29 +1064,48 @@
     function handleSubmitFailure(error) {
       removeCanonicalFields();
       setSubmitting(false);
+      console.error('Submission failed:', error);
       byId('message').textContent = `Error: ${error?.message || 'Submission failed. Please try again.'}`;
     }
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
       if (submitting || Object.values(photoState).some(state => state.processing)) return;
+
       for (const state of Object.values(autocomplete)) {
         if (state.input.value.trim() && !state.selected) state.input.setCustomValidity(state.message);
       }
+
       if (!form.reportValidity()) return;
+
       prepareCanonicalFields();
       byId('message').textContent = '';
       setSubmitting(true);
+
+      const debugId = makeDebugId();
+
       try {
+        const formData = new FormData(form);
+        formData.append('debugId', debugId);
+
         const response = await fetch('/api', {
           method: 'POST',
-          body: new FormData(form)
+          body: formData
         });
-        const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.error || 'Submission failed. Please try again.');
+
+        const data = await readApiResponse(response, debugId);
         handleSubmitSuccess(data.submissionId);
       } catch (error) {
-        handleSubmitFailure(error);
+        const code =
+          error?.code ||
+          (error?.name === 'TypeError' ? 'NETWORK_ERROR' : 'CLIENT_ERROR');
+
+        const id = error?.debugId || debugId;
+        const message = error?.message || 'Submission failed. Please try again.';
+
+        handleSubmitFailure(
+          new Error(`[${code} · ${id}] ${message}`)
+        );
       }
     });
 
