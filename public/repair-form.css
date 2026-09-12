@@ -203,12 +203,6 @@ legend {
   font-size: 19px;
   font-weight: 700;
 }
-.camera-button-sub {
-  margin-top: 3px;
-  font-size: 13px;
-  font-weight: 400;
-  opacity: .7;
-}
 .camera-button:disabled {
   opacity: .55;
 }
@@ -397,6 +391,12 @@ form.is-submitting :is(input, textarea, button, .choice) {
   margin-bottom: -1rem;
 }
 
+.info {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-top: -.5rem;
+  margin-bottom: 0.8rem;
+}
 /* DESKTOP */
 @media (min-width: 800px) {
   main {
