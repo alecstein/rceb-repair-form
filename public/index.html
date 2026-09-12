@@ -1014,38 +1014,72 @@
       ).toUpperCase();
     }
 
-    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const STATUS_POLL_INTERVAL = 1000;
+    const STATUS_POLL_TIMEOUT = 30000;
+    const STATUS_REQUEST_TIMEOUT = 3000;
 
-    async function verifySubmission(submissionId) {
-      let gotValidStatus = false;
+    function waitForSubmissionInSheet(submissionId) {
+      return new Promise(resolve => {
+        const startedAt = Date.now();
+        const controllers = new Set();
+        let finished = false;
+        let intervalId = null;
+        let deadlineId = null;
 
-      // Why verify every submission:
-      // Apps Script may write the row successfully but its ContentService HTTP
-      // response can fail on the way back. The sheet's Submission ID is therefore
-      // the source of truth. Status checks are read-only and safe to repeat.
-      for (let attempt = 0; attempt < 3; attempt++) {
-        if (attempt) await wait(1000);
+        const finish = saved => {
+          if (finished) return;
+          finished = true;
+          clearInterval(intervalId);
+          clearTimeout(deadlineId);
+          controllers.forEach(controller => controller.abort());
+          resolve(saved);
+        };
 
-        try {
-          const response = await fetch(
-            `/api?action=status&id=${encodeURIComponent(submissionId)}&_=${Date.now()}`,
-            { cache: 'no-store' }
+        const check = async () => {
+          if (finished) return;
+
+          const controller = new AbortController();
+          controllers.add(controller);
+          const requestTimeout = setTimeout(
+            () => controller.abort(),
+            STATUS_REQUEST_TIMEOUT
           );
 
-          const data = await response.json();
+          try {
+            const response = await fetch(
+              `/api?action=status&id=${encodeURIComponent(submissionId)}&_=${Date.now()}`,
+              {
+                cache: 'no-store',
+                signal: controller.signal
+              }
+            );
 
-          if (response.ok && data.ok && typeof data.saved === 'boolean') {
-            gotValidStatus = true;
-            if (data.saved) return { saved: true, verified: true };
+            const data = await response.json();
+
+            if (response.ok && data.ok && data.saved === true) {
+              finish(true);
+            }
+          } catch (error) {
+            // A status request can itself fail because Apps Script's ContentService
+            // response is redirected through Google. Ignore an individual failure:
+            // another check is launched every second until the 30-second deadline.
+            console.warn(
+              `[${submissionId}] status check failed after ${Date.now() - startedAt}ms`,
+              error
+            );
+          } finally {
+            clearTimeout(requestTimeout);
+            controllers.delete(controller);
           }
-        } catch (error) {
-          console.warn(`Status check ${attempt + 1} failed`, error);
-        }
-      }
+        };
 
-      return gotValidStatus
-        ? { saved: false, verified: true }
-        : { saved: false, verified: false };
+        // The POST acknowledgement is intentionally not the source of truth.
+        // We check the Sheet every second and show SUBMITTED as soon as the
+        // Submission ID appears there.
+        check();
+        intervalId = setInterval(check, STATUS_POLL_INTERVAL);
+        deadlineId = setTimeout(() => finish(false), STATUS_POLL_TIMEOUT);
+      });
     }
 
     function handleSubmitSuccess() {
@@ -1074,7 +1108,9 @@
       if (submitting || Object.values(photoState).some(state => state.processing)) return;
 
       for (const state of Object.values(autocomplete)) {
-        if (state.input.value.trim() && !state.selected) state.input.setCustomValidity(state.message);
+        if (state.input.value.trim() && !state.selected) {
+          state.input.setCustomValidity(state.message);
+        }
       }
 
       if (!form.reportValidity()) return;
@@ -1084,54 +1120,29 @@
       setSubmitting(true);
 
       const submissionId = makeSubmissionId();
-      let postError = null;
+      const formData = new FormData(form);
+      formData.append('debugId', submissionId);
 
-      try {
-        const formData = new FormData(form);
-        formData.append('debugId', submissionId);
+      // Fire the POST, but do not wait for its HTTP acknowledgement.
+      // Apps Script can save the row successfully even when Google's redirected
+      // ContentService response is delayed or lost. The Sheet is the source of truth.
+      fetch('/api', {
+        method: 'POST',
+        body: formData
+      }).catch(error => {
+        console.warn(`[${submissionId}] POST request failed`, error);
+      });
 
-        const response = await fetch('/api', {
-          method: 'POST',
-          body: formData
-        });
+      const saved = await waitForSubmissionInSheet(submissionId);
 
-        if (!response.ok) {
-          postError = new Error(`POST returned HTTP ${response.status}.`);
-        } else {
-          try {
-            const data = await response.json();
-            if (!data.ok) postError = new Error(data.error || 'POST was rejected.');
-          } catch {
-            postError = new Error('POST returned an invalid response.');
-          }
-        }
-      } catch (error) {
-        postError = error;
-      }
-
-      // Always verify the saved row independently. This prevents a lost/broken
-      // HTTP acknowledgement from being shown to the volunteer as a failed repair.
-      const status = await verifySubmission(submissionId);
-
-      if (status.saved) {
+      if (saved) {
         handleSubmitSuccess(submissionId);
-        return;
-      }
-
-      if (!status.verified) {
-        handleSubmitFailure(
-          new Error(
-            `[VERIFY_FAILED · ${submissionId}] Could not confirm whether the repair was saved. ` +
-            `Do not resubmit yet; check the sheet using this ID.`
-          )
-        );
         return;
       }
 
       handleSubmitFailure(
         new Error(
-          `[NOT_SAVED · ${submissionId}] The repair was not found in the sheet after verification.` +
-          (postError ? ` POST error: ${postError.message}` : '')
+          `[NOT_SAVED · ${submissionId}] The repair was not found in the sheet within 30 seconds.`
         )
       );
     });
