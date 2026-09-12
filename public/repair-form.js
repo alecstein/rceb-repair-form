@@ -512,7 +512,7 @@ form.addEventListener('submit', async event => {
     handleSubmitSuccess();
   } catch (error) {
     console.error('Repair saved, but the form could not finish resetting.', error);
-    byId('message').textContent = 'Succesfully submitted, but something went wrong. Refresh the page.';
+    byId('message').textContent = 'Successfully submitted, but something went wrong. Refresh the page.';
   }
 });
 
