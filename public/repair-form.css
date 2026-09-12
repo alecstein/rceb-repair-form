@@ -380,6 +380,17 @@ form.is-submitting :is(input, textarea, button, .choice) {
   opacity: 0.7;
 }
 
+.form-cta {
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  /*padding: 0;*/
+  font-size: 1rem;
+}
+
+.form-cta a {
+  color: white;
+}
+
 /* DESKTOP */
 @media (min-width: 800px) {
   main {
