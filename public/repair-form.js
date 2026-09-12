@@ -405,13 +405,13 @@ function updatePhotoButton(stage) {
   const state = photoState[stage];
   const count = Object.keys(state.items).length;
   const button = byId(`${stage}PhotoButton`);
+
   setButtonLoading(button, state.processing);
   button.disabled = state.processing || count >= MAX_PHOTOS;
-  button.querySelector('.camera-button-main').textContent = count >= MAX_PHOTOS
-    ? 'Maximum photos added' : count ? '📷 Add another photo' : '📷 Add photo';
-  button.querySelector('.camera-button-sub').textContent = count >= MAX_PHOTOS
-    ? `${MAX_PHOTOS} photos` : `up to ${MAX_PHOTOS} photos`;
-  byId('submitButton').disabled = submitting || Object.values(photoState).some(state => state.processing);
+
+  byId('submitButton').disabled =
+    submitting ||
+    Object.values(photoState).some(state => state.processing);
 }
 
 function resetPhotoArea(stage) {
