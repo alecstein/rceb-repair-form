@@ -999,20 +999,34 @@
       button.setAttribute('aria-busy', String(loading));
     }
 
-    function setSubmitting(value) {
-      submitting = value;
-      setButtonLoading(byId('submitButton'), value);
-      form.classList.toggle('is-submitting', value);
-      form.querySelector('.form-content').inert = value;
-      form.setAttribute('aria-busy', String(value));
-      if (value) lockedScrollY = window.scrollY;
-      Object.assign(document.body.style, {
-        position: value ? 'fixed' : '', top: value ? `-${lockedScrollY}px` : '',
-        left: value ? '0' : '', right: value ? '0' : '', width: value ? '100%' : ''
+  function setSubmitting(value) {
+    submitting = value;
+    setButtonLoading(byId('submitButton'), value);
+    form.classList.toggle('is-submitting', value);
+    form.querySelector('.form-content').inert = value;
+    form.setAttribute('aria-busy', String(value));
+  
+    if (value) {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'auto'
       });
-      if (!value) window.scrollTo(0, lockedScrollY);
+  
+      lockedScrollY = window.scrollY;
     }
-
+  
+    Object.assign(document.body.style, {
+      position: value ? 'fixed' : '',
+      top: value ? `-${lockedScrollY}px` : '',
+      left: value ? '0' : '',
+      right: value ? '0' : '',
+      width: value ? '100%' : ''
+    });
+  
+    if (!value) {
+      window.scrollTo(0, lockedScrollY);
+    }
+  }
     function handleSubmitSuccess() {
       removeCanonicalFields();
       const savedName = byId('f1').value;
