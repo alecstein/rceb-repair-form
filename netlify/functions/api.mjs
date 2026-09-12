@@ -82,18 +82,21 @@ export default async request => {
 
     if (request.method === 'GET') {
       const action = incomingUrl.searchParams.get('action') || '';
-      const q = incomingUrl.searchParams.get('q') || '';
 
       const target = new URL(appsScriptUrl);
-      target.searchParams.set('action', action);
-      target.searchParams.set('q', q);
+
+      // Forward the query string verbatim. In addition to legacy autocomplete,
+      // this carries action=status&id=... for the post-write verification check.
+      for (const [key, value] of incomingUrl.searchParams.entries()) {
+        target.searchParams.set(key, value);
+      }
 
       console.log(`[${debugId}] GET ${action || '(no action)'} started`);
 
       let response;
       try {
         response = await fetch(target, {
-          redirect: 'manual',
+          redirect: 'follow',
           cache: 'no-store'
         });
       } catch (error) {
