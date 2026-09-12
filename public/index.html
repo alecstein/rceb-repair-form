@@ -578,6 +578,17 @@
             <span class="optional">(optional)</span>
             <textarea name="f7" id="f7" autocomplete="off" writingsuggestions="false" placeholder="Did they learn anything or have anything to share?" ></textarea>
           </label>
+          <label class="field" for="f8">
+            Tool purchase request(s)
+            <span class="optional">(optional)</span>
+            <textarea
+              name="f8"
+              id="f8"
+              autocomplete="off"
+              writingsuggestions="false"
+              placeholder="E.g. awl, T15 Torx bit"
+            ></textarea>
+          </label>
           <div class="photo-block">
             <div class="photo-heading">
               Repair photo(s)
@@ -616,7 +627,8 @@
     const form = byId('repairForm');
     const canonicalFields = {
       volunteerName: 'f1', guestName: 'f2', itemType: 'f3', brand: 'f4',
-      modelInfo: 'f5', problemSolution: 'f6', guestReflection: 'f7'
+      modelInfo: 'f5', problemSolution: 'f6', guestReflection: 'f7',
+      toolPurchaseRequests: 'f8'
     };
     let submitting = false;
     let lockedScrollY = 0;
