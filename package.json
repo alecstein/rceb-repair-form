@@ -1,0 +1,23 @@
+{
+  "name": "rceb-repair-form",
+  "version": "1.0.0",
+  "description": "Repair Cafe submission form",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alecstein/rceb-repair-form.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alecstein/rceb-repair-form/issues"
+  },
+  "homepage": "https://github.com/alecstein/rceb-repair-form#readme",
+  "dependencies": {
+    "google-auth-library": "^11.0.2"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}
