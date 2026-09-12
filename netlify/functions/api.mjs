@@ -93,7 +93,7 @@ export default async request => {
       let response;
       try {
         response = await fetch(target, {
-          redirect: 'follow',
+          redirect: 'manual',
           cache: 'no-store'
         });
       } catch (error) {
