@@ -1,6 +1,7 @@
 const MAX_PHOTOS = 5;
 const MAX_IMAGE_DIMENSION = 1800;
-const MAX_IMAGE_BYTES = 325 * 1024;
+const TARGET_IMAGE_BYTES = 325 * 1024;
+const MAX_IMAGE_BYTES = TARGET_IMAGE_BYTES * 1.15;
 const JPEG_QUALITY = 0.82;
 const AUTOCOMPLETE_DELAY = 300;
 const byId = id => document.getElementById(id);
@@ -43,6 +44,34 @@ const autocomplete = {
     message: 'Choose a brand from the list or add this brand.'
   }
 };
+
+for (const [kind, state] of Object.entries(autocomplete)) {
+  Object.assign(state, {
+    control: byId(`${kind}Control`), menu: byId(`${kind}Menu`),
+    selected: false, requestId: 0, timer: null, freeText: false
+  });
+
+  state.input.addEventListener('input', () => {
+    state.selected = false;
+
+    if (kind === 'volunteerName') {
+      saveSetting('repairCafeVolunteerName', state.input.value);
+    }
+
+    state.input.setCustomValidity(
+      state.input.value.trim() && !state.freeText ? state.message : ''
+    );
+
+    if (kind === 'brand') byId('brandStatus').value = '';
+
+    cancelAutocomplete(state);
+    const query = state.input.value.trim();
+
+    if (query.length >= 2 || kind === 'volunteerName') {
+      state.timer = setTimeout(() => loadAutocomplete(kind, query), AUTOCOMPLETE_DELAY);
+    }
+  });
+}
 
 function readTaxonomyCache() {
   try {
@@ -105,7 +134,7 @@ const taxonomyReady = (async () => {
 
 const volunteerReady = (async () => {
   const state = autocomplete.volunteerName;
-  state.control?.classList.add('loading');
+  state.control.classList.add('loading');
 
   try {
     const response = await fetch('/.netlify/functions/volunteers');
@@ -127,37 +156,9 @@ const volunteerReady = (async () => {
     state.input.setCustomValidity('');
     console.error('Could not load volunteer list.', error);
   } finally {
-    state.control?.classList.remove('loading');
+    state.control.classList.remove('loading');
   }
 })();
-
-for (const [kind, state] of Object.entries(autocomplete)) {
-  Object.assign(state, {
-    control: byId(`${kind}Control`), menu: byId(`${kind}Menu`),
-    selected: false, requestId: 0, timer: null, freeText: false
-  });
-
-  state.input.addEventListener('input', () => {
-    state.selected = false;
-
-    if (kind === 'volunteerName') {
-      saveSetting('repairCafeVolunteerName', state.input.value);
-    }
-
-    state.input.setCustomValidity(
-      state.input.value.trim() && !state.freeText ? state.message : ''
-    );
-
-    if (kind === 'brand') byId('brandStatus').value = '';
-
-    cancelAutocomplete(state);
-    const query = state.input.value.trim();
-
-    if (query.length >= 2 || kind === 'volunteerName') {
-      state.timer = setTimeout(() => loadAutocomplete(kind, query), AUTOCOMPLETE_DELAY);
-    }
-  });
-}
 
 autocomplete.volunteerName.input.addEventListener('focus', () => {
   loadAutocomplete('volunteerName', autocomplete.volunteerName.input.value.trim());
@@ -176,17 +177,17 @@ function localMatches(values, query, limit = 20) {
   const contains = [];
 
   for (const value of values) {
-    const lower = value.toLocaleLowerCase();
-    if (lower.startsWith(q)) {
+    const lower = value.trim().toLocaleLowerCase();
+    if (lower === q) {
+      starts.unshift(value);
+    } else if (lower.startsWith(q)) {
       starts.push(value);
     } else if (lower.includes(q)) {
       contains.push(value);
     }
   }
 
-  return starts.concat(contains)
-    .slice(0, limit)
-    .map(value => ({ value, label: value }));
+  return starts.concat(contains).slice(0, limit);
 }
 
 async function loadAutocomplete(kind, query) {
@@ -217,12 +218,14 @@ async function loadAutocomplete(kind, query) {
 function renderAutocomplete(kind, results, query) {
   const state = autocomplete[kind];
   state.menu.replaceChildren();
-  for (const result of results) {
-    addAutocompleteOption(kind, result.label || result.value, result.value, 'existing');
+  for (const value of results) {
+    addAutocompleteOption(kind, value, value, 'existing');
   }
-  const exactMatch = results.some(result => String(result.value).trim().toLowerCase() === query.toLowerCase());
-  if (kind === 'brand' && !exactMatch) {
-    addAutocompleteOption(kind, `+ Add brand “${query}”`, query, 'new');
+  if (kind === 'brand') {
+    const exactMatch = taxonomyData.brands.some(
+      brand => brand.trim().toLocaleLowerCase() === query.toLocaleLowerCase()
+    );
+    if (!exactMatch) addAutocompleteOption(kind, `+ Add brand “${query}”`, query, 'new');
   }
   if (!state.menu.children.length) {
     showAutocompleteMessage(state, 'No matches.');
@@ -274,7 +277,7 @@ document.addEventListener('click', event => {
   }
 });
 
-// Photos are resized locally, then sent as file inputs for Apps Script.
+// Resize photos locally before upload.
 function newPhotoState() {
   return { nextIndex: 1, pending: null, processing: false, items: {} };
 }
@@ -301,36 +304,40 @@ async function optimizePhoto(file) {
     const initialScale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
     let width = Math.max(1, Math.round(image.naturalWidth * initialScale));
     let height = Math.max(1, Math.round(image.naturalHeight * initialScale));
-    let quality = JPEG_QUALITY;
+    let quality = Math.round(JPEG_QUALITY * 100);
     let blob = null;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Image processing is unavailable.');
 
     for (let attempt = 0; attempt < 12; attempt++) {
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('Image processing is unavailable.');
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, width, height);
-      context.drawImage(image, 0, 0, width, height);
+      if (attempt === 0 || canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+      }
       blob = await new Promise((resolve, reject) => {
         canvas.toBlob(result => result ? resolve(result) : reject(new Error('Could not resize image.')),
-          'image/jpeg', quality);
+          'image/jpeg', quality / 100);
       });
-      if (blob.size <= MAX_IMAGE_BYTES) break;
+      if (blob.size <= TARGET_IMAGE_BYTES) break;
 
-      if (quality > 0.58) {
-        quality = Math.max(0.58, quality - 0.08);
+      if (quality > 58) {
+        quality = Math.max(58, quality - 8);
       } else if (Math.max(width, height) > 900) {
         width = Math.max(1, Math.round(width * 0.82));
         height = Math.max(1, Math.round(height * 0.82));
-        quality = 0.72;
+        quality = 72;
+      } else if (quality > 45) {
+        quality = Math.max(45, quality - 5);
       } else {
-        quality = Math.max(0.45, quality - 0.05);
+        break;
       }
     }
 
-    if (!blob || blob.size > MAX_IMAGE_BYTES * 1.15) {
+    if (!blob || blob.size > MAX_IMAGE_BYTES) {
       throw new Error('Photo is too large to upload.');
     }
     const name = (file.name || 'photo').replace(/\.[^.]+$/, '') || 'photo';
@@ -354,7 +361,7 @@ function addPhoto(stage) {
   input.addEventListener('change', async () => {
     if (!input.files.length) return;
     state.processing = true;
-    updatePhotoButton(stage);
+    updateButtons();
     try {
       const file = await optimizePhoto(input.files[0]);
       const transfer = new DataTransfer();
@@ -370,7 +377,7 @@ function addPhoto(stage) {
       alert('Could not prepare that photo. Please try a JPEG or PNG image.');
     } finally {
       state.processing = false;
-      updatePhotoButton(stage);
+      updateButtons();
     }
   });
   input.click();
@@ -394,24 +401,23 @@ function showPhotoPreview(stage, index, input, file) {
     input.remove();
     wrapper.remove();
     delete photoState[stage].items[index];
-    updatePhotoButton(stage);
+    updateButtons();
   });
   wrapper.append(image, button);
   byId(`${stage}PhotoPreviews`).appendChild(wrapper);
   photoState[stage].items[index] = { input, objectUrl };
 }
 
-function updatePhotoButton(stage) {
-  const state = photoState[stage];
-  const count = Object.keys(state.items).length;
-  const button = byId(`${stage}PhotoButton`);
+function updateButtons() {
+  for (const [stage, state] of Object.entries(photoState)) {
+    const button = byId(`${stage}PhotoButton`);
+    setButtonLoading(button, state.processing);
+    button.disabled = submitting || state.processing || Object.keys(state.items).length >= MAX_PHOTOS;
+  }
 
-  setButtonLoading(button, state.processing);
-  button.disabled = state.processing || count >= MAX_PHOTOS;
-
-  byId('submitButton').disabled =
-    submitting ||
-    Object.values(photoState).some(state => state.processing);
+  const submitButton = byId('submitButton');
+  setButtonLoading(submitButton, submitting);
+  submitButton.disabled = submitting || Object.values(photoState).some(state => state.processing);
 }
 
 function resetPhotoArea(stage) {
@@ -420,11 +426,10 @@ function resetPhotoArea(stage) {
   byId(`${stage}PhotoInputs`).replaceChildren();
   byId(`${stage}PhotoPreviews`).replaceChildren();
   byId(`${photoPrefix(stage)}Count`).value = '0';
-  updatePhotoButton(stage);
 }
 
 function preparePhotosForSubmission() {
-  // Renumber surviving photos after deletions so counts stay bounded at five.
+  // Keep photo field names consecutive after deletions.
   for (const [stage, state] of Object.entries(photoState)) {
     state.pending?.remove();
     state.pending = null;
@@ -435,14 +440,13 @@ function preparePhotosForSubmission() {
 }
 
 function setButtonLoading(button, loading) {
-  button.disabled = loading;
   button.classList.toggle('is-loading', loading);
   button.setAttribute('aria-busy', String(loading));
 }
 
 function setSubmitting(value) {
   submitting = value;
-  setButtonLoading(byId('submitButton'), value);
+  updateButtons();
   form.classList.toggle('is-submitting', value);
   form.querySelector('.form-content').inert = value;
   form.setAttribute('aria-busy', String(value));
@@ -463,15 +467,10 @@ function handleSubmitSuccess() {
   resetAutocompletes();
   resetPhotoArea('before');
   resetPhotoArea('after');
-  setSubmitting(false);
+  updateButtons();
   byId('message').textContent = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   celebrate();
-}
-
-function handleSubmitFailure(error) {
-  setSubmitting(false);
-  byId('message').textContent = `Error: ${error?.message || 'Submission failed. Please try again.'}`;
 }
 
 form.addEventListener('submit', async event => {
@@ -491,24 +490,29 @@ form.addEventListener('submit', async event => {
   setSubmitting(true);
 
   const submissionId = makeSubmissionId();
-  const formData = new FormData(form);
-  formData.append('debugId', submissionId);
-
   try {
+    const formData = new FormData(form);
+    formData.append('debugId', submissionId);
     const response = await fetch('/api', {
       method: 'POST',
       body: formData,
       signal: AbortSignal.timeout(28000)
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || 'Could not confirm the save.');
-    handleSubmitSuccess();
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Something went wrong [01].');
   } catch (error) {
-    handleSubmitFailure(new Error(
-      `[${submissionId}] ${error.message || 'Could not confirm the save.'} Check the sheet before submitting again.`
-    ));
+    byId('message').textContent =
+      `Error: [${submissionId}] ${error.message || 'Unknown'} Try submitting again.`;
+    return;
   } finally {
     setSubmitting(false);
+  }
+
+  try {
+    handleSubmitSuccess();
+  } catch (error) {
+    console.error('Repair saved, but the form could not finish resetting.', error);
+    byId('message').textContent = 'Succesfully submitted, but something went wrong. Refresh the page.';
   }
 });
 
