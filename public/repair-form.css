@@ -17,6 +17,8 @@ body {
   margin: 0;
   background: var(--green);
   color: var(--white);
+  background-image: url('/images/tools.png');
+  /*background-size: 80px 80px;*/
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 19px;
   line-height: 1.35;
@@ -315,7 +317,7 @@ button.is-loading::after {
     left: 100%;
   }
 }
-/* SUBMIT */
+
 .submit-wrap {
   width: 44%;
   min-width: 170px;
@@ -328,7 +330,8 @@ button.submit {
   width: 100%;
   min-height: 72px;
   padding: 14px 18px;
-  border: 0;
+  border: 20;
+  border-color: white;
   background: var(--purple);
   color: white;
   font: inherit;
@@ -374,7 +377,7 @@ button.submit:disabled {
   transform: translate(-50%, -50%) scale(1) rotate(-3deg);
 }
 form.is-submitting :is(input, textarea, button, .choice) {
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 /* DESKTOP */
