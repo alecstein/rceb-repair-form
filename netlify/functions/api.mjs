@@ -22,8 +22,51 @@ function codedError(code, message) {
   return error;
 }
 
+// Follow redirects explicitly so each network leg has its own timing.
+// Log only hostnames: redirect query strings contain one-time response tokens.
+export async function fetchWithTiming(url, options, debugId) {
+  const startedAt = Date.now();
+  let target = new URL(url);
+  let init = { ...options, redirect: 'manual' };
+  for (let hop = 0; hop <= 20; hop++) {
+    const hopStartedAt = Date.now();
+    console.log(`[${debugId}] upstream hop started`, {
+      hop, host: target.hostname, method: init.method || 'GET'
+    });
+    const response = await fetch(target, init);
+    console.log(`[${debugId}] upstream headers received`, {
+      hop, host: target.hostname, status: response.status,
+      hopMs: Date.now() - hopStartedAt, totalMs: Date.now() - startedAt
+    });
+    const location = response.headers.get('location');
+    if (![301, 302, 303, 307, 308].includes(response.status) || !location) {
+      return response;
+    }
+    const next = new URL(location, target);
+    // Match fetch's POST-to-GET redirect behavior; never retry the POST.
+    if (([301, 302].includes(response.status) && init.method === 'POST') ||
+        (response.status === 303 && init.method !== 'HEAD')) {
+      init = { ...init, method: 'GET', body: undefined };
+      const headers = new Headers(init.headers);
+      headers.delete('content-type');
+      headers.delete('content-length');
+      init.headers = headers;
+    }
+    if (next.origin !== target.origin) {
+      const headers = new Headers(init.headers);
+      for (const name of ['authorization', 'cookie', 'proxy-authorization']) headers.delete(name);
+      init.headers = headers;
+    }
+    await response.body?.cancel();
+    target = next;
+  }
+  throw codedError('UPSTREAM_REDIRECT_LIMIT', 'Too many upstream redirects.');
+}
+
 async function readAppsScriptResponse(response, debugId) {
+  const bodyStartedAt = Date.now();
   const text = await response.text();
+  console.log(`[${debugId}] upstream body received`, { bodyMs: Date.now() - bodyStartedAt, characters: text.length });
   let data;
 
   try {
@@ -32,7 +75,7 @@ async function readAppsScriptResponse(response, debugId) {
     console.error(`[${debugId}] Apps Script returned non-JSON`, {
       status: response.status,
       contentType: response.headers.get('content-type'),
-      bodyPreview: text.slice(0, 500)
+      bodyCharacters: text.length
     });
 
     throw codedError(
@@ -91,14 +134,17 @@ export default async request => {
         target.searchParams.set(key, value);
       }
 
+      target.searchParams.set('traceId', debugId);
+      const submissionId = incomingUrl.searchParams.get('id') || '';
+      console.log(`[${debugId}] status correlation`, {
+        submissionId: /^[A-Za-z0-9_-]{4,64}$/.test(submissionId) ? submissionId : ''
+      });
+
       console.log(`[${debugId}] GET ${action || '(no action)'} started`);
 
       let response;
       try {
-        response = await fetch(target, {
-          redirect: 'follow',
-          cache: 'no-store'
-        });
+        response = await fetchWithTiming(target, { cache: 'no-store' }, debugId);
       } catch (error) {
         throw codedError(
           'UPSTREAM_FETCH_ERROR',
@@ -161,14 +207,13 @@ export default async request => {
       try {
         console.log(`[${debugId}] Sending submission to Apps Script`);
 
-        response = await fetch(appsScriptUrl, {
+        response = await fetchWithTiming(appsScriptUrl, {
           method: 'POST',
           headers: {
             'content-type': 'application/json'
           },
-          body: JSON.stringify(payload),
-          redirect: 'follow'
-        });
+          body: JSON.stringify(payload)
+        }, debugId);
       } catch (error) {
         throw codedError(
           'UPSTREAM_FETCH_ERROR',
