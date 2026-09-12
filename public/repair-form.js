@@ -403,74 +403,6 @@ function makeSubmissionId() {
   ).toUpperCase();
 }
 
-const STATUS_POLL_INTERVAL = 1000;
-const STATUS_POLL_TIMEOUT = 30000;
-const STATUS_REQUEST_TIMEOUT = 3000;
-
-function waitForSubmissionInSheet(submissionId) {
-  return new Promise(resolve => {
-    const startedAt = Date.now();
-    const controllers = new Set();
-    let finished = false;
-    let intervalId = null;
-    let deadlineId = null;
-
-    const finish = saved => {
-      if (finished) return;
-      finished = true;
-      clearInterval(intervalId);
-      clearTimeout(deadlineId);
-      controllers.forEach(controller => controller.abort());
-      resolve(saved);
-    };
-
-    const check = async () => {
-      if (finished) return;
-
-      const controller = new AbortController();
-      controllers.add(controller);
-      const requestTimeout = setTimeout(
-        () => controller.abort(),
-        STATUS_REQUEST_TIMEOUT
-      );
-
-      try {
-        const response = await fetch(
-          `/api?action=status&id=${encodeURIComponent(submissionId)}&_=${Date.now()}`,
-          {
-            cache: 'no-store',
-            signal: controller.signal
-          }
-        );
-
-        const data = await response.json();
-
-        if (response.ok && data.ok && data.saved === true) {
-          finish(true);
-        }
-      } catch (error) {
-        // A status request can itself fail because Apps Script's ContentService
-        // response is redirected through Google. Ignore an individual failure:
-        // another check is launched every second until the 30-second deadline.
-        console.warn(
-          `[${submissionId}] status check failed after ${Date.now() - startedAt}ms`,
-          error
-        );
-      } finally {
-        clearTimeout(requestTimeout);
-        controllers.delete(controller);
-      }
-    };
-
-    // The POST acknowledgement is intentionally not the source of truth.
-    // We check the Sheet every second and show SUBMITTED as soon as the
-    // Submission ID appears there.
-    check();
-    intervalId = setInterval(check, STATUS_POLL_INTERVAL);
-    deadlineId = setTimeout(() => finish(false), STATUS_POLL_TIMEOUT);
-  });
-}
-
 function handleSubmitSuccess() {
   const savedName = byId('volunteerName').value;
   form.reset();
@@ -510,28 +442,22 @@ form.addEventListener('submit', async event => {
   const formData = new FormData(form);
   formData.append('debugId', submissionId);
 
-  // Fire the POST, but do not wait for its HTTP acknowledgement.
-  // Apps Script can save the row successfully even when Google's redirected
-  // ContentService response is delayed or lost. The Sheet is the source of truth.
-  fetch('/api', {
-    method: 'POST',
-    body: formData
-  }).catch(error => {
-    console.warn(`[${submissionId}] POST request failed`, error);
-  });
-
-  const saved = await waitForSubmissionInSheet(submissionId);
-
-  if (saved) {
-    handleSubmitSuccess(submissionId);
-    return;
+  try {
+    const response = await fetch('/api', {
+      method: 'POST',
+      body: formData,
+      signal: AbortSignal.timeout(28000)
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Could not confirm the save.');
+    handleSubmitSuccess();
+  } catch (error) {
+    handleSubmitFailure(new Error(
+      `[${submissionId}] ${error.message || 'Could not confirm the save.'} Check the sheet before submitting again.`
+    ));
+  } finally {
+    setSubmitting(false);
   }
-
-  handleSubmitFailure(
-    new Error(
-      `[NOT_SAVED · ${submissionId}] The repair was not found in the sheet within 30 seconds.`
-    )
-  );
 });
 
 function celebrate() {
