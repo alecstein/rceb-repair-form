@@ -1,46 +1,129 @@
 import { Buffer } from 'node:buffer';
 
-const json = (value, status = 200) => new Response(JSON.stringify(value), {
-  status,
-  headers: {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store'
-  }
-});
+const json = (value, status = 200) =>
+  new Response(JSON.stringify(value), {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store'
+    }
+  });
 
-async function readAppsScriptResponse(response) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function readAppsScriptResponse(response, debugId) {
   const text = await response.text();
+
   let data;
+
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error(`Apps Script returned an unexpected response (${response.status}).`);
+    console.error(`[${debugId}] Invalid Apps Script response:`, {
+      status: response.status,
+      body: text.slice(0, 1000)
+    });
+
+    throw Object.assign(
+      new Error('Apps Script returned an invalid response.'),
+      { code: 'APPSCRIPT_BAD_RESPONSE' }
+    );
   }
-  if (!response.ok) throw new Error(data.error || `Apps Script returned ${response.status}.`);
+
+  if (!response.ok) {
+    throw Object.assign(
+      new Error(data.error || `Apps Script returned HTTP ${response.status}.`),
+      { code: `APPSCRIPT_HTTP_${response.status}` }
+    );
+  }
+
+  if (!data.ok) {
+    throw Object.assign(
+      new Error(data.error || 'Apps Script rejected the submission.'),
+      { code: data.code || 'APPSCRIPT_ERROR' }
+    );
+  }
+
   return data;
 }
 
-export default async (request) => {
+export default async request => {
   const appsScriptUrl = process.env.APPS_SCRIPT_URL;
-  if (!appsScriptUrl) return json({ ok: false, error: 'APPS_SCRIPT_URL is not configured in Netlify.' }, 500);
+
+  let debugId =
+    Math.random()
+      .toString(36)
+      .slice(2, 8)
+      .toUpperCase();
+
+  if (!appsScriptUrl) {
+    return json({
+      ok: false,
+      code: 'CONFIG_ERROR',
+      debugId,
+      error: 'APPS_SCRIPT_URL is not configured.'
+    }, 500);
+  }
 
   try {
     const incomingUrl = new URL(request.url);
 
     if (request.method === 'GET') {
-      const action = incomingUrl.searchParams.get('action') || '';
-      const q = incomingUrl.searchParams.get('q') || '';
-      const target = new URL(appsScriptUrl);
+      const action =
+        incomingUrl.searchParams.get('action') || '';
+
+      const q =
+        incomingUrl.searchParams.get('q') || '';
+
+      const target =
+        new URL(appsScriptUrl);
+
       target.searchParams.set('action', action);
       target.searchParams.set('q', q);
 
-      const response = await fetch(target, { redirect: 'follow', cache: 'no-store' });
-      const data = await readAppsScriptResponse(response);
-      return json(data, data.ok ? 200 : 400);
+      const response =
+        await fetchWithTimeout(
+          target,
+          {
+            redirect: 'follow',
+            cache: 'no-store'
+          }
+        );
+
+      const data =
+        await readAppsScriptResponse(
+          response,
+          debugId
+        );
+
+      return json({
+        ...data,
+        debugId
+      });
     }
 
     if (request.method === 'POST') {
-      const incoming = await request.formData();
+      const incoming =
+        await request.formData();
+
+      debugId =
+        incoming.get('debugId') ||
+        debugId;
+
+      console.log(`[${debugId}] Submission started`);
+
       const payload = {};
 
       for (const [key, value] of incoming.entries()) {
@@ -49,27 +132,84 @@ export default async (request) => {
           continue;
         }
 
-        const bytes = Buffer.from(await value.arrayBuffer());
+        const bytes =
+          Buffer.from(
+            await value.arrayBuffer()
+          );
+
         payload[key] = {
           name: value.name || key,
-          type: value.type || 'application/octet-stream',
-          data: bytes.toString('base64')
+          type:
+            value.type ||
+            'application/octet-stream',
+          data:
+            bytes.toString('base64')
         };
       }
 
-      const response = await fetch(appsScriptUrl, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-        redirect: 'follow'
+      console.log(`[${debugId}] Sending to Apps Script`);
+
+      const response =
+        await fetchWithTimeout(
+          appsScriptUrl,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+            redirect: 'follow'
+          },
+          25000
+        );
+
+      console.log(
+        `[${debugId}] Apps Script responded ${response.status}`
+      );
+
+      const data =
+        await readAppsScriptResponse(
+          response,
+          debugId
+        );
+
+      console.log(`[${debugId}] Submission successful`);
+
+      return json({
+        ...data,
+        debugId
       });
-      const data = await readAppsScriptResponse(response);
-      return json(data, data.ok ? 200 : 400);
     }
 
-    return json({ ok: false, error: 'Method not allowed.' }, 405);
+    return json({
+      ok: false,
+      code: 'METHOD_NOT_ALLOWED',
+      debugId,
+      error: 'Method not allowed.'
+    }, 405);
+
   } catch (error) {
-    console.error(error);
-    return json({ ok: false, error: error && error.message ? error.message : 'Request failed.' }, 500);
+    let code =
+      error?.code ||
+      'NETLIFY_ERROR';
+
+    if (
+      error?.name === 'AbortError'
+    ) {
+      code =
+        'UPSTREAM_TIMEOUT';
+    }
+
+    console.error(`[${debugId}] ${code}`, error);
+
+    return json({
+      ok: false,
+      code,
+      debugId,
+      error:
+        error?.name === 'AbortError'
+          ? 'Apps Script did not respond within 25 seconds.'
+          : error?.message || 'Request failed.'
+    }, 500);
   }
 };
