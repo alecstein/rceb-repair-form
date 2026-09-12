@@ -381,7 +381,7 @@ form.is-submitting :is(input, textarea, button, .choice) {
 }
 
 .form-cta {
-  margin-top: -1rem;
+  margin-top: -1.3rem;
   margin-bottom: 1rem;
   /*padding: 0;*/
   font-size: 1rem;
@@ -389,6 +389,12 @@ form.is-submitting :is(input, textarea, button, .choice) {
 
 .form-cta a {
   color: white;
+}
+
+.form-explanation {
+  padding-top: 1rem;
+  font-size: 1rem;
+  margin-bottom: -1rem;
 }
 
 /* DESKTOP */
