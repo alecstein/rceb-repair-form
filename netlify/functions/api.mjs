@@ -3,7 +3,7 @@ import { googleRequest } from '../lib/google.mjs';
 
 export const HEADERS = [
   'Timestamp', 'Date', 'Device ID', 'Volunteer name', 'Guest name', 'Item type',
-  'Brand', 'Brand status', 'Model / type / serial', 'Photos before',
+  'Item status', 'Brand', 'Brand status', 'Model / type / serial', 'Photos before',
   'Condition on arrival', 'Repair outcome', 'Guest experience',
   'Problem / solution description', 'Guest notes', 'Tool purchase request(s)',
   'Photos after', 'Submission ID'
@@ -16,7 +16,7 @@ function invalid(message) { throw Object.assign(new Error(message), { validation
 
 export function validate(form) {
   const values = {};
-  for (const name of ['deviceId', 'volunteerName', 'guestName', 'itemType', 'brand',
+  for (const name of ['deviceId', 'volunteerName', 'guestName', 'itemType', 'itemStatus', 'brand',
     'brandStatus', 'modelInfo', 'condition', 'outcome', 'guestExperience',
     'problemSolution', 'guestReflection', 'toolPurchaseRequests', 'debugId']) {
     const value = form.get(name) ?? '';
@@ -35,6 +35,7 @@ export function validate(form) {
   for (const [name, allowed] of Object.entries(choices)) {
     if (!allowed.includes(values[name])) invalid('Choose a valid ' + name);
   }
+  if (!['existing', 'new'].includes(values.itemStatus)) invalid('Choose or add an item type.');
   if (values.brand && !['existing', 'new'].includes(values.brandStatus)) invalid('Choose or add a brand.');
   if (!values.brand) values.brandStatus = '';
   values.photos = [];
@@ -69,7 +70,7 @@ export default async request => {
     id = values.debugId;
     // A single deadline covers authentication, photos and the sheet write.
     // A timed-out append is uncertain, never automatically repeated.
-    const headers = await read('A1:R1');
+    const headers = await read('A1:S1');
     if (HEADERS.some((header, i) => headers.values?.[0]?.[i] !== header)) {
       throw new Error('Spreadsheet headers do not match the repair form.');
     }
@@ -106,12 +107,12 @@ export default async request => {
     }).format(now);
     const row = [
       now.toISOString(), date, values.deviceId, values.volunteerName, values.guestName,
-      values.itemType, values.brand, values.brandStatus, values.modelInfo, photos.Before.join('\n'),
+      values.itemType, values.itemStatus, values.brand, values.brandStatus, values.modelInfo, photos.Before.join('\n'),
       values.condition, values.outcome, values.guestExperience, values.problemSolution,
       values.guestReflection, values.toolPurchaseRequests, photos.After.join('\n'), id
     ];
     writeStarted = true;
-    const result = await api(base + encodeURIComponent(name + '!A:R') +
+    const result = await api(base + encodeURIComponent(name + '!A:S') +
       ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', {
       method: 'POST', data: { values: [row] }
     });
