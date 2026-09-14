@@ -110,7 +110,7 @@ function showSuggestedOptions(input, suggestions, myList, addNewFunction) {
 	addNew.textContent = "+ Add new";
 	addNew.addEventListener("click", ()=>{
 		addNewFunction();
-		addNew.remove();
+		suggestions.innerHTML = '';
 	})
 	suggestions.appendChild(addNew);
 }
