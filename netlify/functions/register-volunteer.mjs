@@ -54,7 +54,7 @@ export default async (request) => {
 
     return Response.json({ name });
   } catch {
-    console.error('Volunteer registration could not be confirmed');
+    console.error('Registration failed:', error.message);
 
     return Response.json(
       { error: 'Could not confirm registration. Check the sheet before retrying.' },
