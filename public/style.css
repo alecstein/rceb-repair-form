@@ -1,0 +1,192 @@
+:root {
+	--green: #18371d;
+	--muted: #ccc;
+	--required: #ff3b30;
+	--purple: #7b3fb4;
+}
+
+body {
+	background: var(--green);
+	color: white;
+	background-image: url('/images/tools.png');
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 19px;
+	margin: 1em;
+}
+
+input, li, textarea, .choice, .wide-button {
+	box-sizing: border-box;
+}
+
+input[type="text"],
+textarea {
+	display: block;
+	width: 100%;
+	min-height: 2em;
+	font: inherit;
+	color: black;
+	padding: .7em .7em;
+	font-weight: bold;
+}
+
+input {
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+}
+
+textarea {
+	min-height: 4em;
+	resize: vertical;
+}
+
+#add-volunteer-first-name, 
+#add-volunteer-last-name, 
+#add-volunteer-email, 
+#add-volunteer-cancel, 
+#new-volunteer-title,
+#register {
+	display: none;
+}
+
+.dropdown {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+.dropdown li {
+	display: block;
+	width: 100%;
+	background: white;
+	color: black;
+	padding: 0.5em;
+}
+
+.dropdown:hover li:hover {
+	background: #eee;
+}
+
+h1 {
+	font-size: 1.5em;
+	line-height: .95;
+	text-transform: uppercase;
+}
+
+.rceb-logo {
+	display: block;
+	width: 100%;
+	max-width: 400px;
+	height: auto;
+}
+
+.explanation {
+	margin-top: -.5em;
+	margin-bottom: 1em;
+}
+
+.field, fieldset {
+	margin-top: 1.5em;
+	margin-bottom: 1.5em;
+}
+
+.required::after {
+	content:" *";
+	color: red;
+	display: inline;
+	font-weight: bold;
+}
+
+textarea {
+	margin-top: 0.3em;
+}
+
+.choice-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+}
+
+.choice {
+	display: flex;
+	align-items: center;
+	min-height: 2em;
+	padding: 1em;
+	background: white;
+	color: black;
+	cursor: pointer;
+}
+
+.choice input {
+	width: 2em;
+	height: 2em;
+	margin: 0 1em 0 0;
+	accent-color: var(--green);
+}
+
+fieldset {
+	border: 0;
+	padding: 0;
+	margin-inline: 0;
+	min-width: 0;
+}
+
+legend {
+	padding: 0;
+	margin-bottom: 0.3em;
+}
+
+.wide-button {
+	display: block;
+	width: 100%;
+	margin: 0.5em 0;
+	padding: 0.8em;
+	font: inherit;
+	font-weight: bold;
+	background: var(--purple);
+	color: white;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.muted {
+	color: var(--muted);
+	font-size: .9rem;
+}
+
+.wide-button:disabled {
+  filter: brightness(85%);
+  cursor: default;
+  pointer-events: none;
+}
+
+.thumbnails {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.thumbnails img {
+	display: block;
+	width: 90px;
+	height: 90px;
+}
+
+.thumbnails > div {
+	position: relative;
+}
+
+.thumbnails button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: black;
+  color: white;
+  font: 24px Arial, sans-serif;
+  text-align: center;
+  cursor: pointer;
+}
