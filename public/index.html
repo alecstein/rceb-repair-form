@@ -1,293 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Repair Cafe El Barrio Repair Form</title>
-  <base target="_top">
-  <link rel="stylesheet" href="/repair-form.css">
-  <script
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>RCEB Repair Form</title>
+	<link rel="stylesheet" href="/style.css">
+<!--   <script
     src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@4/tsparticles.confetti.bundle.min.js"
     defer
-  ></script>
-  <script src="/repair-form.js" defer></script>
+  ></script> -->
+  <script src="/script.js" defer></script>
 </head>
 <body>
-  <div class="saved-toast" id="savedToast">Success</div>
+	<main>
+		<header>
+			<img
+			class="rceb-logo"
+			src="/images/repair-cafe-el-barrio-logo.png"
+			alt="Repair Cafe El Barrio"
+			width="1500"
+			height="507"
+			>
+			<h1>Repair form</h1>
+			<details class="explanation">
+				<summary>Why do we have repair forms?</summary>
+				<p>This form connects each repair record to photos and guest feedback, tracks impact and purchase requests, and makes it easy to upload to repairmonitor.org.
+				</p>
+				<p>When we apply for grants we consult this data. Grants pay for tools, food, and some workshops. 
+				</p>
+				<p>Before/after photos are encouraged. Good photos may end up on our social media (ask the guest if this is ok.)
+				</p>
+				<p>"Your name" doesn't mean the person solely (or even mostly) responsible for the repair. It's just the person responsible for the form. We often work together and don't track who did what.
+				</p>
+			</details>
+		</header>
 
-  <main>
-    <header>
-      <img
-        class="cafe-logo"
-        src="/images/repair-cafe-el-barrio-logo.png"
-        alt="Repair Cafe El Barrio"
-        width="1500"
-        height="507"
-      >
-      <h1>Repair form</h1>
-      <details class="form-explanation">
-        <summary>Why do we have repair forms?</summary>
-        <p>This form connects each repair record to photos and guest feedback, tracks impact and purchase requests, and makes it easy to upload to repairmonitor.org.
-        </p>
-        <p>When we apply for grants we consult this data. Grants pay for tools, food, and some workshops. 
-        </p>
-        <p>Before/after photos are encouraged. Good photos may end up on our social media (ask the guest if this is ok.)
-        </p>
-        <p>"Your name" doesn't mean the person solely (or even mostly) responsible for the repair. It's just the person responsible for the form. We often work together and don't track who did what.
-        </p>
-      </details>
-    </header>
+		<form>
+			<div class="field">
+				<span class="required" id="volunteer-name-title">Your name (volunteer)</span>
+				<span class="required" id="new-volunteer-title">New volunteer registration</span>
+				<input type="text" name="volunteer-name" id="volunteer-name" placeholder="First Last"required>
+				<ul class="dropdown" id="volunteer-name-suggestions"></ul>
 
-    <form id="repairForm" autocomplete="off">
-      <input type="hidden" name="deviceId" id="deviceId">
-      <input type="hidden" name="photoBeforeCount" id="photoBeforeCount" value="0">
-      <input type="hidden" name="photoAfterCount" id="photoAfterCount" value="0">
-      <div class="form-content">
-        <!-- Item and guest details -->
-        <section class="repair-section">
-          <div class="field">
-            <label for="volunteerName">
-              Your name<span class="required">*</span>
-            </label>
-            <div class="autocomplete-control" id="volunteerNameControl">
-              <input
-                type="text"
-                name="volunteerName"
-                id="volunteerName"
-                autocomplete="off"
-                writingsuggestions="false"
-                placeholder="First Last"
-                required
-              >
-              <div class="loading-track" aria-hidden="true">
-                <div class="loading-bar"></div>
-              </div>
-              <div class="autocomplete-menu" id="volunteerNameMenu"></div>
-            </div>
-          </div>
-          <div class="form-cta">
-            Don't see your name? <a href="https://forms.gle/ZJxQuCQWcQB1xGxB8">Fill this out</a>
-          </div>
+				<input type="text" name="add-volunteer-first-name" id="add-volunteer-first-name" placeholder="First">
 
-          <label class="field" for="guestName">
-            Guest's name<span class="required">*</span>
-            <input
-              type="text"
-              name="guestName"
-              id="guestName"
-              autocomplete="off"
-              writingsuggestions="false"
-              placeholder="First Last"
-              required
-            >
-          </label>
+				<input type="text" name="add-volunteer-last-name" id="add-volunteer-last-name" placeholder="Last">
 
-          <div class="field">
-            <label for="itemType">Item type<span class="required">*</span></label>
-            <div class="autocomplete-control" id="itemTypeControl">
-              <input
-                type="text"
-                name="itemType"
-                id="itemType"
-                autocomplete="off"
-                writingsuggestions="false"
-                placeholder="e.g. toaster"
-                required
-              >
-              <div class="loading-track" aria-hidden="true">
-                <div class="loading-bar"></div>
-              </div>
-              <input type="hidden" name="itemStatus" id="itemStatus">
-              <div class="autocomplete-menu" id="itemTypeMenu"></div>
-            </div>
-          </div>
+				<!-- need email validation here -->
+				<input type="text" name="add-volunteer-email" id="add-volunteer-email" placeholder="your-email@example.com">
+			</div>	
 
-          <div class="field">
-            <label for="brand">
-              Brand
-              <span class="optional">(optional)</span>
-            </label>
-            <div class="autocomplete-control" id="brandControl">
-              <input
-                type="text"
-                name="brand"
-                id="brand"
-                autocomplete="off"
-                writingsuggestions="false"
-                placeholder="e.g. Bosch"
-              >
-              <input type="hidden" name="brandStatus" id="brandStatus">
-              <div class="loading-track" aria-hidden="true">
-                <div class="loading-bar"></div>
-              </div>
-              <div class="autocomplete-menu" id="brandMenu"></div>
-            </div>
-          </div>
+			<button class="wide-button" type="button" id="register">Register new volunteer</button>
+			<button class="wide-button" type="button" id="add-volunteer-cancel">Cancel</button>
 
-          <label class="field" for="modelInfo">
-            Model number or serial
-            <span class="optional">(optional)</span>
-            <input
-              type="text"
-              name="modelInfo"
-              id="modelInfo"
-              autocomplete="off"
-              writingsuggestions="false"
-            >
-          </label>
+			<!-- <div>Don't see your name? <a href="https://forms.gle/ZJxQuCQWcQB1xGxB8">Fill this out</a></div> -->
 
-          <div class="photo-block">
-            <div class="photo-heading">
-              Photos before repair
-            </div>
-            <div class="info">
-              (up to 5 photos of object or guest)
-            </div>
-            <div class="photo-action">
-              <button type="button" class="camera-button" id="beforePhotoButton">
-                <span class="camera-button-main">
-                  Add photo (before)
-                </span>
-              </button>
-            </div>
-            <div class="photo-inputs" id="beforePhotoInputs"></div>
-            <div class="photo-previews" id="beforePhotoPreviews"></div>
-          </div>
+			<div class="field">
+				<span class="required">Guest name</span>
+				<input type="text" name="guest-name" placeholder="First Last"required>
+			</div>
+			<div class="field">
+				<span class="required">Product type</span>
+				<input autocomplete="off" type="text" list="" name="product-type" id="product-type" placeholder="e.g. Toaster" required>
+				<ul class="dropdown" id="product-type-suggestions"></ul>
+			</div>
+			<div class="field">
+				Brand name <span class="muted">(optional)</span>
+				<input type="text" name="brand-name" id="brand-name" placeholder="e.g. Bosch" >
+				<ul class="dropdown" id="brand-name-suggestions"></ul>
+			</div>
+			<div class="field">
+				Serial or model <span class="muted">(optional)</span>
+				<input type="text" name="modelInfo" placeholder="123X SuperMax" >
+			</div>
 
-          <fieldset>
-            <legend>Item condition on arrival<span class="required">*</span></legend>
-            <div class="choice-grid">
-              <label class="choice">
-                <input type="radio" name="condition" value="Good" required>
-                Good
-              </label>
-              <label class="choice">
-                <input type="radio" name="condition" value="Okay">
-                Okay
-              </label>
-              <label class="choice">
-                <input type="radio" name="condition" value="Broken">
-                Broken
-              </label>
-            </div>
-          </fieldset>
-        </section>
+			<fieldset>
+				<legend>
+					<span class="required">Item condition on arrival</span>
+				</legend>
+				<div class="choice-grid">
+					<label class="choice">
+						<input type="radio" name="condition" value="Good" required> Good
+					</label>
+					<label class="choice">
+						<input type="radio" name="condition" value="Okay"> Okay
+					</label>
+					<label class="choice">
+						<input type="radio" name="condition" value="Broken"> Broken
+					</label>
+				</div>
+			</fieldset>
 
-        <!-- Repair results and notes -->
-        <section class="repair-section">
-          <h2 class="section-title">Post-repair</h2>
+			<!-- iOS devices -->
+			<div id="camera-button-before-ios" style="display: none">
+				Photos before repair [iOS]
+				<div class="muted">(up to 5 photos)</div>
+				<button class="wide-button" type="button" onclick="openPhotosBefore('photo-library')">
+					Add photo
+				</button>
 
-          <fieldset>
-            <legend>Repair outcome<span class="required">*</span></legend>
-            <div class="choice-grid">
-              <label class="choice">
-                <input type="radio" name="outcome" value="Success" required>
-                Success
-              </label>
-              <label class="choice">
-                <input type="radio" name="outcome" value="Some improvement">
-                Some improvement
-              </label>
-              <label class="choice">
-                <input type="radio" name="outcome" value="Advice given">
-                Advice given
-              </label>
-              <label class="choice">
-                <input type="radio" name="outcome" value="Couldn't help">
-                Couldn't help
-              </label>
-            </div>
-          </fieldset>
+			</div>
 
-          <fieldset>
-            <legend>Guest experience<span class="required">*</span></legend>
-            <div class="choice-grid">
-              <label class="choice">
-                <input type="radio" name="guestExperience" value="Great" required>
-                <span class="emoji">😃</span>
-                Great
-              </label>
-              <label class="choice">
-                <input type="radio" name="guestExperience" value="Good">
-                <span class="emoji">🙂</span>
-                Good
-              </label>
-              <label class="choice">
-                <input type="radio" name="guestExperience" value="Neutral">
-                <span class="emoji">😐</span>
-                Neutral
-              </label>
-              <label class="choice">
-                <input type="radio" name="guestExperience" value="Bad">
-                <span class="emoji">😞</span>
-                Bad
-              </label>
-            </div>
-          </fieldset>
+			<!-- non-iOS devices -->
+			<div id="camera-button-before-other" style="display: none">Photos before repair [other]
+				<div class="muted">(up to 5 photos)</div>
+				<button class="wide-button" type="button" onclick="openPhotosBefore('camera')">
+					Take photo
+				</button>
 
-          <label class="field" for="problemSolution">
-            Problem / solution description
-            <span class="optional">(optional)</span>
-            <textarea
-              name="problemSolution"
-              id="problemSolution"
-              autocomplete="off"
-              writingsuggestions="false"
-              placeholder="What was wrong, and what did you do or recommend?"
-            ></textarea>
-          </label>
+				<button class="wide-button" type="button" onclick="openPhotosBefore('photo-library')">
+					Choose existing
+				</button>
+			</div>
+			<div id="before-thumbnails" class="thumbnails"></div>
 
-          <label class="field" for="guestReflection">
-            Guest notes
-            <span class="optional">(optional)</span>
-            <textarea
-              name="guestReflection"
-              id="guestReflection"
-              autocomplete="off"
-              writingsuggestions="false"
-              placeholder="Did they learn anything or have anything to share?"
-            ></textarea>
-          </label>
+			<fieldset>
+				<legend>
+					<span class="required">Outcome</span>
+				</legend>
+				<div class="choice-grid">
+					<label class="choice">
+						<input type="radio" name="outcome" value="Successful repair" required> Successful repair
+					</label>
+					<label class="choice">
+						<input type="radio" name="outcome" value="Some improvement"> Some improvement
+					</label>
+					<label class="choice">
+						<input type="radio" name="outcome" value="Advice given"> Advice given
+					</label>
+					<label class="choice">
+						<input type="radio" name="outcome" value="Couldn't help"> Couldn't help
+					</label>
 
-          <label class="field" for="toolPurchaseRequests">
-            Tool purchase request(s)
-            <span class="optional">(optional)</span>
-            <textarea
-              name="toolPurchaseRequests"
-              id="toolPurchaseRequests"
-              autocomplete="off"
-              writingsuggestions="false"
-              placeholder="E.g. Torx T10 bit, awl"
-            ></textarea>
-          </label>
+				</div>
+			</fieldset>
 
-          <div class="photo-block">
-            <div class="photo-heading">
-              Photos during/after repair
-            </div>
-            <div class="info">
-              (up to 5 photos of object or guest)
-            </div>
-            <div class="photo-action">
-              <button type="button" class="camera-button" id="afterPhotoButton">
-                <span class="camera-button-main">
-                  Add photo (during/after)
-                </span>
-              </button>
-            </div>
-            <div class="photo-inputs" id="afterPhotoInputs"></div>
-            <div class="photo-previews" id="afterPhotoPreviews"></div>
-          </div>
+			<fieldset>
+				<legend>
+					<span class="required">Guest experience</span> 
+				</legend>
+				<div class="choice-grid">
+					<label class="choice">
+						<input type="radio" name="experience" value="Great" required> Great
+					</label>
+					<label class="choice">
+						<input type="radio" name="experience" value="Good"> Good
+					</label>
+					<label class="choice">
+						<input type="radio" name="experience" value="Okay"> Okay
+					</label>
+					<label class="choice">
+						<input type="radio" name="experience" value="Bad"> Bad
+					</label>
+				</div>
+			</fieldset>
 
-          <div class="submit-wrap">
-            <button class="submit" id="submitButton" type="submit">
-              <span>Submit</span>
-            </button>
-          </div>
-          <div id="message" aria-live="polite"></div>
-        </section>
-      </div>
-    </form>
-  </main>
-</body>
-</html>
+			<!-- iOS devices -->
+			<div id="camera-button-after-ios" style="display: none">
+				Photos after repair [iOS]
+				<div class="muted">(up to 5 photos)</div>
+				<button class="wide-button" type="button" onclick="openPhotosAfter('photo-library')">
+					Add photo
+				</button>
+			</div>
+
+			<!-- non-iOS devices -->
+			<div id="camera-button-after-other" style="display: none">Photos after repair [other]
+				<div class="muted">(up to 5 photos)</div>
+				<button class="wide-button" type="button" onclick="openPhotosAfter('camera')">
+					Take photo
+				</button>
+
+				<button class="wide-button" type="button" onclick="openPhotosAfter('photo-library')">
+					Choose existing
+				</button>
+			</div>
+			<div id="after-thumbnails" class="thumbnails"></div>
+			<div class="field">
+				Guest notes <span class="muted">(optional)</span>
+				<textarea name="guestReflection" placeholder="Notes on the guest experience (can ask guest)"></textarea>
+			</div>
+
+			<div class="field">
+				Problem and solution <span class="muted">(optional)</span>
+				<textarea name="problemSolution" placeholder="What was wrong, and what did you do/recommend?"></textarea>
+			</div>
+
+			<div class="field">
+				Tool purchase requests <span class="muted">(optional)</span>
+				<textarea name="toolPurchaseRequests" placeholder="e.g. Torx T10 bits, awl"></textarea>
+			</div>
+
+			<button class="wide-button" id="submitButton" type="submit">
+				Submit
+			</button>
+
+			<input type="file" id="camera"
+			accept="image/*" capture="environment" hidden>
+
+			<input type="file" id="photo-library"
+			accept="image/*" multiple hidden>
+			
+		</form>
+
+
