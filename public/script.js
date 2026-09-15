@@ -353,7 +353,7 @@ form.addEventListener('submit', async event => {
 			top: 0,
 			behavior: 'smooth'
 		});
-		confetti();
+		celebrate();
 	} catch (error) {
 		alert(error.message);
 	} finally {
@@ -406,7 +406,7 @@ async function resizePhoto(photo, maxBytes) {
 	}
 }
 
-function confetti() {
+function celebrate() {
   if (typeof window.confetti !== 'function') return;
 
   window.confetti({
