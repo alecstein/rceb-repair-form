@@ -86,8 +86,10 @@ async function setCategories() {
 
 function showSuggestedOptions(input, suggestions, myList) {
 	const value = input.value.toLocaleLowerCase().trim();
+
 	// clear all the suggestions
 	suggestions.innerHTML = "";
+
 	if (value == "") return;
 	const filtered = myList.filter(
 		q => q.toLocaleLowerCase().includes(value));
@@ -100,6 +102,17 @@ function showSuggestedOptions(input, suggestions, myList) {
 			suggestions.innerHTML = ""
 		})
 		suggestions.appendChild(li);
+	}
+
+	// special suggestion for volunteers to add a vol
+	if (input.id === 'volunteer-name') {
+	  const addNew = document.createElement('li');
+	  addNew.textContent = '+ Add new';
+	  addNew.onclick = () => {
+	    addNewVolunteer();
+	    suggestions.innerHTML = '';
+	  };
+	  suggestions.appendChild(addNew);
 	}
 }
 
@@ -117,14 +130,14 @@ async function setSuggestedOptions() {
 
 	// we do something special for the volunteer field
 	// this is bad practice but whatever
-	volunteerSuggestions = byId('volunteer-name-suggestions');
-	const addNew = document.createElement("li");
-	addNew.textContent = "+ Add new";
-	addNew.addEventListener("click", ()=>{
-		addNewVolunteer();
-		volunteerSuggestions.innerHTML = '';
-	})
-	volunteerSuggestions.appendChild(addNew);
+	// volunteerSuggestions = byId('volunteer-name-suggestions');
+	// const addNew = document.createElement("li");
+	// addNew.textContent = "+ Add new";
+	// addNew.addEventListener("click", ()=>{
+	// 	addNewVolunteer();
+	// 	volunteerSuggestions.innerHTML = '';
+	// })
+	// volunteerSuggestions.appendChild(addNew);
 
 	const productTypeList = await getProductTypes();
 	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList)
