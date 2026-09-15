@@ -1,42 +1,31 @@
-# Repair form: direct Google APIs
+# Repair form
+## Basic structure
 
-The browser submits to Netlify, which uploads photos to Google Drive and appends
-one row using the Google Sheets API. Apps Script is no longer called.
-Autocomplete continues to use the existing static JSON files.
+There are three pieces here: 
 
-## Deployment
+* the form (the part you see on your computer, i.e. the code in this repo)
+* Netlify
+* Google Sheets
 
-1. In a Google Cloud project, enable Google Sheets API and Google Drive API.
-2. Create a service account for this form. It does not need a project IAM role
-   or domain-wide delegation. Create a JSON key and keep it outside this repository.
-3. Give its client_email edit access to the submission spreadsheet and permission
-   to create files in the existing Shared drive photo folder. Workspace sharing
-   policy must allow that account.
-4. In Netlify, set these server-side environment variables for Functions:
-   - GOOGLE_SERVICE_ACCOUNT_JSON: the complete JSON key file contents, marked secret.
+The form sends a POST request to Netlify. Netlify then does some things to update the Google spreadsheets. I picked Netlify because they're free. GitHub pages would only work for a static site, which this is not.
+
+## What does Netlify do?
+
+Netlify uploads the user's photos to our Google Drive and adds rows to the Google Sheets. There are two relevant sheets: our volunteer list, and our repair form submissions. 
+
+## What do I need to get started on Netlify?
+
+You need to set up these environment variables:
+
+   - GOOGLE_SERVICE_ACCOUNT_JSON
    - GOOGLE_SPREADSHEET_ID: 1qQ7RrKcBTBhsxVu9fn28fEnA0Lq6E_CCDBeaMMNUKSI
-   - GOOGLE_SHEET_NAME: Repair Form Submissions
+   - GOOGLE_SHEET_NAME: Repair Form Submissions or Volunteers
    - GOOGLE_PHOTO_FOLDER_ID: 1_E9LxWVdTZOs1h3wtt7WZrOPwylVFW_7
-   - REPAIR_TIME_ZONE: America/New_York (change if the old script used another zone).
-5. Deploy this repository including package.json and package-lock.json.
-   APPS_SCRIPT_URL is no longer used. Keep the old script for rollback.
-6. Test a repair without photos and another with before/after photos. Confirm
-   the row, photo links and successful form reset.
+   - REPAIR_TIME_ZONE: America/New_York
 
-Official references:
-- https://developers.google.com/identity/protocols/oauth2/service-account
-- https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets.values/append
-- https://developers.google.com/workspace/drive/api/guides/manage-uploads
+## RepairMonitor
 
-## Submission behavior
+Why is this sheet designed the way it is? Largely because of RepairMonitor, the database of Repair Cafe International... I think.
 
-Submit sends one request. A successful Google Sheets acknowledgement resets
-the form and shows the existing success animation. An error keeps the form
-contents and displays an error. There is no polling, status lookup, automatic
-retry, or additional button.
+Anyway, we want our repairs to go on there so we need to follow their schema. They make the user choose the product type, the brand name, the category, and so we make the user do that as well.
 
-Photos remain as usable URLs, one per line. Timestamp is an ISO UTC string;
-Date uses REPAIR_TIME_ZONE. RAW writes keep user text from becoming spreadsheet
-formulas. Failed uploads or writes may leave uploaded photos in the folder.
-
-Live testing is left to the project owner.
