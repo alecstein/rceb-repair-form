@@ -104,7 +104,7 @@
 			<!-- non-iOS devices only -->
 			<div id="camera-button-before-other" style="display: none">
 				<button class="wide-button" type="button" onclick="openPhotosBefore('camera')">
-					Take photo with camera
+					Open camera
 				</button>
 			</div>
 			<div id="before-thumbnails" class="thumbnails"></div>
@@ -162,7 +162,7 @@
 			<!-- non-iOS devices -->
 			<div id="camera-button-after-other" style="display: none">
 				<button class="wide-button" type="button" onclick="openPhotosAfter('camera')">
-					Take photo with camera
+					Open camera
 				</button>
 			</div>
 			<div id="after-thumbnails" class="thumbnails"></div>
@@ -190,6 +190,10 @@
 
 			<input type="file" id="photo-library"
 			accept="image/*" multiple hidden>
+
+			<div id="loading-indicator" style="display: none">
+				<div class="lds-hourglass"></div>
+			</div>
 
 		</form>
 
