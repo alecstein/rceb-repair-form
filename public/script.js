@@ -314,12 +314,17 @@ form.addEventListener('submit', async event => {
 		formData.set('product-status', productExists ? 'existing' : 'new');
 		formData.set('brand-status', brand ? (brandExists ? 'existing' : 'new') : '');
 
+		// share the size budget among all the photos
+		// netlify has a 4.5MB data budget
+		const photoCount = beforePhotos.length + afterPhotos.length;
+		const maxBytes = photoCount ? Math.floor(4_000_000 / photoCount) : 0;
+
 		for (const photo of beforePhotos) {
-			formData.append('beforePhotos', await resizePhoto(photo));
+			formData.append('beforePhotos', await resizePhoto(photo, maxBytes));
 		}
 
 		for (const photo of afterPhotos) {
-			formData.append('afterPhotos', await resizePhoto(photo));
+			formData.append('afterPhotos', await resizePhoto(photo, maxBytes));
 		}
 
 		const response = await fetch('/api', {
@@ -345,8 +350,8 @@ form.addEventListener('submit', async event => {
 		byId('after-thumbnails').innerHTML = '';
 
 		window.scrollTo({
-		  top: 0,
-		  behavior: 'smooth'
+			top: 0,
+			behavior: 'smooth'
 		});
 	} catch (error) {
 		alert(error.message);
@@ -356,7 +361,7 @@ form.addEventListener('submit', async event => {
 });
 
 // make a note to understand this
-async function resizePhoto(photo) {
+async function resizePhoto(photo, maxBytes) {
 	const image = new Image();
 	const url = URL.createObjectURL(photo);
 
@@ -384,7 +389,7 @@ async function resizePhoto(photo) {
 
 			if (!blob) throw new Error('Could not resize photo');
 
-			if (blob.size <= 600 * 1024) {
+			if (blob.size <= maxBytes) {
 				return new File(
 					[blob],
 					photo.name.replace(/\.[^.]+$/, '') + '.jpg',
