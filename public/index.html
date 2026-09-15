@@ -5,11 +5,11 @@
 	<meta name="viewport" content="width=device-width">
 	<title>RCEB Repair Form</title>
 	<link rel="stylesheet" href="/style.css">
-  <script
-    src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@4/tsparticles.confetti.bundle.min.js"
-    defer
-  ></script>
-  <script src="/script.js" defer></script>
+	<script
+	src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@4/tsparticles.confetti.bundle.min.js"
+	defer
+	></script>
+	<script src="/script.js" defer></script>
 </head>
 <body>
 	<main>
@@ -67,7 +67,7 @@
 			<div class="field">
 				<span class="required field-title">Category</span>
 				<select name="category" id="category" required>>
-				<option value="" disabled selected>Choose a category</option>
+					<option value="" disabled selected>Choose a category</option>
 				</select>
 			</div>
 
@@ -100,21 +100,21 @@
 			</fieldset>
 
 			<!-- iOS devices -->
-			<div id="camera-button-before">
+			<div id="camera-before">
 				<span class="field-title">Photos before repair</span>
-				<div class="muted">(up to 3 photos)</div>
-				<button class="wide-button" type="button" onclick="openPhotosBefore('photo-library')">
+				<span class="muted">(up to 3 photos)</span>
+				<button class="wide-button" type="button" id="camera-before-button" onclick="openPhotosBefore('photo-library')">
 					Add photo
 				</button>
-
 			</div>
 
 			<!-- non-iOS devices only -->
-			<div id="camera-button-before-non-ios" style="display: none">
-				<button class="wide-button" type="button" onclick="openPhotosBefore('camera')">
+			<div id="camera-before-non-ios" style="display: none">
+				<button class="wide-button" type="button" id="camera-before-non-ios-button" onclick="openPhotosBefore('camera')">
 					Open camera
 				</button>
 			</div>
+			<div class="invalid" id="max-photos-before">max 3 photos</div>
 			<div id="before-thumbnails" class="thumbnails"></div>
 
 			<fieldset>
@@ -159,20 +159,21 @@
 			</fieldset>
 
 			<!-- iOS devices -->
-			<div id="camera-button-after-ios">
+			<div id="camera-after-ios">
 				<span class="field-title">Photos during/after repair</span>
-				<div class="muted">(up to 3 photos)</div>
-				<button class="wide-button" type="button" onclick="openPhotosAfter('photo-library')">
+				<span class="muted">(up to 3 photos)</span>
+				<button class="wide-button" type="button" id="camera-after-button" onclick="openPhotosAfter('photo-library')">
 					Add photo
 				</button>
 			</div>
 
 			<!-- non-iOS devices -->
-			<div id="camera-button-after-non-ios">
-				<button class="wide-button" type="button" onclick="openPhotosAfter('camera')">
+			<div id="camera-after-non-ios">
+				<button class="wide-button" type="button" id="camera-after-non-ios-button" onclick="openPhotosAfter('camera')">
 					Open camera
 				</button>
 			</div>
+			<div class="invalid" id="max-photos-after">max 3 photos</div>
 			<div id="after-thumbnails" class="thumbnails"></div>
 			<div class="field">
 				<span class="field-title">Guest notes</span> <span class="muted">(optional)</span>
@@ -210,6 +211,6 @@
 
 <!-- TODO
 REDUCE QUALITY FIRST! WAY BEFORE REDUCING SIZE. MAYBE DEFAULT TO 80% or 75% quality
- -->
+-->
 
 

@@ -15,8 +15,15 @@
 #camera-button-before-non-ios,
 #camera-button-after-non-ios,
 #camera,
-#photo-library {
+#photo-library,
+#max-photos-before, 
+#max-photos-after {
 	display: none;
+}
+
+#max-photos-before, 
+#max-photos-after {
+	margin-top: 0.5em;
 }
 
 body {

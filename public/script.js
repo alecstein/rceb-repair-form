@@ -9,8 +9,8 @@ const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 	&& navigator.maxTouchPoints > 1);
 
 if (!isIOS) {
-	show('camera-button-before-non-ios');
-	show('camera-button-after-non-ios');
+	show('camera-before-non-ios');
+	show('camera-after-non-ios');
 }
 
 function byId(elementId) {
@@ -190,14 +190,29 @@ function cancelAddNewVolunteer() {
 // if we have too many photos we wanna stop the user
 // from adding them 
 function checkPhotoLimit() {
-	for (const button of document.querySelectorAll(
-		'#camera-button-before-ios button, #camera-button-before-non-ios button'
-		)) {button.disabled = beforePhotos.length >= MAX_PHOTOS;}
+	const beforeButtons = [byId('camera-before-button'), byId('camera-before-non-ios-button')]
+	const afterButtons = [byId('camera-after-button'), byId('camera-after-non-ios-button')]
 
-		for (const button of document.querySelectorAll(
-			'#camera-button-after-ios button, #camera-button-after-non-ios button'
-			)) {button.disabled = afterPhotos.length >= MAX_PHOTOS;}
+	for (const button of beforeButtons) {
+		if (beforePhotos.length >= MAX_PHOTOS) {
+			button.disabled = true;
+			show('max-photos-before');
+		} else {
+			button.disabled = false;
+			hide('max-photos-before')
+		}
 	}
+
+	for (const button of afterButtons) {
+		if (afterPhotos.length >= MAX_PHOTOS) {
+			button.disabled = true;
+			show('max-photos-after');
+		} else {
+			button.disabled = false;
+			hide('max-photos-after')
+		}
+	}
+}
 
 // basically
 // 1. checks if there are too many photos uploaded, 
@@ -337,16 +352,16 @@ async function resizePhoto(photo, maxBytes) {
 
 // stolen from codepen
 function celebrate() {
-  if (typeof window.confetti !== 'function') return;
+	if (typeof window.confetti !== 'function') return;
 
-  window.confetti({
-    count: 1000,
-    spread: 80,
-    ticks: 600,
-    startVelocity: 55,
-    position: { x: 50, y: 95 },
-    disableForReducedMotion: true
-  }).catch(console.error);
+	window.confetti({
+		count: 1000,
+		spread: 80,
+		ticks: 600,
+		startVelocity: 55,
+		position: { x: 50, y: 95 },
+		disableForReducedMotion: true
+	}).catch(console.error);
 }
 
 form.addEventListener('submit', async event => {
