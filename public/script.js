@@ -189,14 +189,17 @@ function addSuggestedOptions(inputId, suggestionsId, myList) {
 }
 
 async function setSuggestedOptions() {
-	const volunteerList = await getVolunteers();
-	addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
-
-	const productTypeList = await getProductTypes();
-	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList)
-
-	const brandNameList = await getBrandNames();
-	addSuggestedOptions("brand-name", "brand-name-suggestions", brandNameList)
+    await Promise.all([
+        getVolunteers().then(list =>
+            addSuggestedOptions('volunteer-name', 'volunteer-name-suggestions', list)
+        ),
+        getProductTypes().then(list =>
+            addSuggestedOptions('product-type', 'product-type-suggestions', list)
+        ),
+        getBrandNames().then(list =>
+            addSuggestedOptions('brand-name', 'brand-name-suggestions', list)
+        )
+    ]);
 }
 
 // if we have too many photos we wanna stop the user
