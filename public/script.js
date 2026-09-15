@@ -227,8 +227,7 @@ function openPhotosAfter(inputId) {
 setSuggestedOptions();
 
 async function registerVolunteer() {
-  // 1. Send the new volunteer to Netlify
-	show('loading-indicator')
+	id('loading-indicator').style.display = 'flex';
 	const response = await fetch('/.netlify/functions/register-volunteer', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -244,8 +243,6 @@ async function registerVolunteer() {
 	}
 
 	const volunteer = await response.json();
-
-	// 3. Reload the sheet
 	const volunteerList = await getVolunteers();
 
 	addSuggestedOptions(
@@ -255,12 +252,10 @@ async function registerVolunteer() {
 		addNewVolunteer
 		);
 
-  // 4. Check that their name came back
 	if (!volunteerList.includes(volunteer.name)) {
 		throw new Error('Registered, but could not refresh their name');
 	}
 
-  // 5. Return to the normal field and fill it
 	id('add-volunteer-cancel').click();
 	id('volunteer-name').value = volunteer.name;
 
