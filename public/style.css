@@ -90,7 +90,7 @@ input {
 	margin-bottom: 0.3em;
 }
 
-input[type="text"],
+input[type="text"], input[type="email"],
 textarea {
 	padding: .7em .7em;
 }
