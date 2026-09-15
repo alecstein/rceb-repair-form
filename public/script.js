@@ -1,3 +1,7 @@
+const photoTools = import('./photos.js');
+let processingPhotos = false;
+let submitting = false;
+
 const MAX_PHOTOS = 3;
 
 var beforePhotos = [];
@@ -211,7 +215,7 @@ function checkPhotoLimit() {
 			button.disabled = true;
 			show('max-photos-before');
 		} else {
-			button.disabled = false;
+			button.disabled = processingPhotos || submitting;
 			hide('max-photos-before')
 		}
 	}
@@ -221,47 +225,57 @@ function checkPhotoLimit() {
 			button.disabled = true;
 			show('max-photos-after');
 		} else {
-			button.disabled = false;
+			button.disabled = processingPhotos || submitting;
 			hide('max-photos-after')
 		}
 	}
+	byId('submitButton').disabled = processingPhotos || submitting;
 }
 
-// basically
-// 1. checks if there are too many photos uploaded, 
-// stops after the first MAX_PHOTOS
-// 2. adds thumbnails with buttons that will remove 
-// those thumbnails (and thumbnail removal buttons)
-function addPhotos(input, photos, thumbnailsId) {
-	for (const file of input.files) {
-		if (photos.length >= MAX_PHOTOS) break;
-
-		photos.push(file);
-
-		const thumbnail = document.createElement('div');
-		const image = document.createElement('img');
-		const remove = document.createElement('button');
-
-		image.src = URL.createObjectURL(file);
-		image.alt = file.name;
-
-		remove.type = 'button';
-		remove.textContent = '×';
-		remove.setAttribute('aria-label', 'Remove photo');
-		remove.onclick = () => {
-			photos.splice(photos.indexOf(file), 1);
-			URL.revokeObjectURL(image.src);
-			thumbnail.remove();
-			checkPhotoLimit();
-		};
-
-		thumbnail.append(image, remove);
-		byId(thumbnailsId).appendChild(thumbnail);
-	}
-
+// A single guard covers both selections; files are processed sequentially.
+async function addPhotos(input, photos, thumbnailsId) {
+	const files = Array.from(input.files);
 	input.value = '';
-
+	if (processingPhotos || submitting) return;
+	processingPhotos = true;
 	checkPhotoLimit();
+	try {
+		for (const source of files) {
+			if (photos.length >= MAX_PHOTOS) break;
+			const thumbnail = document.createElement('div');
+			const remove = document.createElement('button');
+			remove.type = 'button';
+			remove.textContent = '×';
+			remove.setAttribute('aria-label', `Remove ${source.name}`);
+			try {
+				const { optimizePhoto, PHOTO_OPTIONS } = await photoTools;
+				const file = await optimizePhoto(source, PHOTO_OPTIONS);
+				const image = document.createElement('img');
+				image.src = URL.createObjectURL(file);
+				image.alt = file.name;
+				photos.push(file);
+				thumbnail.append(image);
+				remove.onclick = () => {
+					if (submitting) return;
+					photos.splice(photos.indexOf(file), 1);
+					URL.revokeObjectURL(image.src);
+					thumbnail.remove();
+					checkPhotoLimit();
+				};
+			} catch (error) {
+				const message = document.createElement('p');
+				message.setAttribute('role', 'alert');
+				message.textContent = `${source.name}: ${error.message}`;
+				thumbnail.append(message);
+				remove.onclick = () => thumbnail.remove();
+			}
+			thumbnail.append(remove);
+			byId(thumbnailsId).appendChild(thumbnail);
+		}
+	} finally {
+		processingPhotos = false;
+		checkPhotoLimit();
+	}
 }
 
 function openPhotosBefore(inputId) {
@@ -318,51 +332,6 @@ async function registerVolunteer() {
 	hide('loading-indicator')
 }
 
-// make a note to understand this
-async function resizePhoto(photo, maxBytes) {
-	const image = new Image();
-	const url = URL.createObjectURL(photo);
-
-	try {
-		image.src = url;
-		await image.decode();
-
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-
-    // Start with the longest side at most 1600 pixels.
-		const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
-		canvas.width = Math.max(1, Math.round(image.width * scale));
-		canvas.height = Math.max(1, Math.round(image.height * scale));
-
-		while (true) {
-      // Give transparent images a white background.
-			context.fillStyle = 'white';
-			context.fillRect(0, 0, canvas.width, canvas.height);
-			context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-			const blob = await new Promise(resolve => {
-				canvas.toBlob(resolve, 'image/jpeg', 0.8);
-			});
-
-			if (!blob) throw new Error('Could not resize photo');
-
-			if (blob.size <= maxBytes) {
-				return new File(
-					[blob],
-					photo.name.replace(/\.[^.]+$/, '') + '.jpg',
-					{ type: 'image/jpeg' }
-					);
-			}
-
-			canvas.width = Math.max(1, Math.floor(canvas.width * 0.8));
-			canvas.height = Math.max(1, Math.floor(canvas.height * 0.8));
-		}
-	} finally {
-		URL.revokeObjectURL(url);
-	}
-}
-
 // stolen from codepen
 function celebrate() {
 	if (typeof window.confetti !== 'function') return;
@@ -380,7 +349,9 @@ function celebrate() {
 form.addEventListener('submit', async event => {
 	event.preventDefault();
 
-	if (!form.reportValidity()) return;
+	if (processingPhotos || submitting || !form.reportValidity()) return;
+	submitting = true;
+	checkPhotoLimit();
 
 	showLoading();
 
@@ -399,18 +370,8 @@ form.addEventListener('submit', async event => {
 		formData.set('product-status', productExists ? 'existing' : 'new');
 		formData.set('brand-status', brand ? (brandExists ? 'existing' : 'new') : '');
 
-		// share the size budget among all the photos
-		// netlify has a 4.5MB data budget
-		const photoCount = beforePhotos.length + afterPhotos.length;
-		const maxBytes = photoCount ? Math.floor(4_000_000 / photoCount) : 0;
-
-		for (const photo of beforePhotos) {
-			formData.append('beforePhotos', await resizePhoto(photo, maxBytes));
-		}
-
-		for (const photo of afterPhotos) {
-			formData.append('afterPhotos', await resizePhoto(photo, maxBytes));
-		}
+		for (const photo of beforePhotos) formData.append('beforePhotos', photo);
+		for (const photo of afterPhotos) formData.append('afterPhotos', photo);
 
 		const response = await fetch('/api', {
 			method: 'POST',
@@ -428,6 +389,9 @@ form.addEventListener('submit', async event => {
 		form.reset();
 		byId('volunteer-name').value = volunteerName;
 
+		for (const image of document.querySelectorAll('.thumbnails img')) {
+			URL.revokeObjectURL(image.src);
+		}
 		beforePhotos = [];
 		afterPhotos = [];
 		checkPhotoLimit();
@@ -442,6 +406,8 @@ form.addEventListener('submit', async event => {
 	} catch (error) {
 		alert(error.message);
 	} finally {
+		submitting = false;
+		checkPhotoLimit();
 		hide('loading-indicator');
 	}
 });
