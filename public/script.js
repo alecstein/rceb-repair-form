@@ -159,39 +159,37 @@ function showSuggestedOptions(input, suggestions, myList) {
 	}
 }
 
-// function addSuggestedOptions(inputId, suggestionsId, myList) {
-// 	const input = byId(inputId);
-// 	const suggestions = byId(suggestionsId);
-
-// 	input.oninput = () => showSuggestedOptions(input, suggestions, myList);
-// 	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
-// }
-
 function addSuggestedOptions(inputId, suggestionsId, myList) {
-    const input = byId(inputId);
-    const suggestions = byId(suggestionsId);
-    const isVolunteer = inputId === 'volunteer-name';
+	const input = byId(inputId);
+	const suggestions = byId(suggestionsId);
 
-    if (isVolunteer) {
-        input.setCustomValidity('Please choose your name from the dropdown.');
+	input.oninput = () => showSuggestedOptions(input, suggestions, myList);
+	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
+}
+
+function addVolunteerSuggestedOptions(volunteerList) {
+    const input = byId('volunteer-name');
+    const suggestions = byId('volunteer-name-suggestions');
+
+    function clearSelection() {
+        delete input.dataset.selectedName;
+        input.setCustomValidity('Choose your name from the dropdown.');
     }
 
-    input.oninput = () => {
-        if (isVolunteer) {
-            delete input.dataset.selectedName;
-            input.setCustomValidity('Please choose your name from the dropdown.');
-        }
-
-        showSuggestedOptions(input, suggestions, myList);
+    input.oninput = function () {
+        clearSelection();
+        showSuggestedOptions(input, suggestions, volunteerList);
     };
 
-    input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
+    input.onfocus = () => showSuggestedOptions(input, suggestions, volunteerList);
+
+    clearSelection();
 }
 
 async function setSuggestedOptions() {
     await Promise.all([
         getVolunteers().then(list =>
-            addSuggestedOptions('volunteer-name', 'volunteer-name-suggestions', list)
+            addVolunteerSuggestedOptions(list)
         ),
         getProductTypes().then(list =>
             addSuggestedOptions('product-type', 'product-type-suggestions', list)
