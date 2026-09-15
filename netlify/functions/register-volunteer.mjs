@@ -1,3 +1,6 @@
+// written by an LLM
+// registers a volunteer and refreshes
+
 import { googleRequest } from '../lib/google.mjs';
 
 export default async (request) => {

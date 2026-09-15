@@ -1,3 +1,6 @@
+// written by an LLM
+// gets the volunteer names from the registered volunteers list
+
 import { googleRequest } from '../lib/google.mjs';
 
 export default async () => {

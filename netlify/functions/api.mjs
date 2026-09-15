@@ -1,3 +1,7 @@
+// mostly written by an LLM
+// this function sends the form details to Netlify and sends
+// which then updates the google sheet
+
 import { randomUUID } from 'node:crypto';
 import { googleRequest } from '../lib/google.mjs';
 
@@ -107,8 +111,8 @@ async function saveRepair(row, beforeLinks, afterLinks) {
   const cells = row.map(value => ({
     userEnteredValue: { stringValue: String(value ?? '') }
   }));
-  cells[15] = photoLinkCell(beforeLinks); // Column P
-  cells[16] = photoLinkCell(afterLinks); // Column Q
+  cells[16] = photoLinkCell(beforeLinks); // Column Q
+  cells[17] = photoLinkCell(afterLinks); // Column R
 
   // append the values and their links together in one write.
   await googleRequest(baseUrl + ':batchUpdate', {
@@ -147,7 +151,7 @@ export default async request => {
     form.get('experience'),
     form.get('problemSolution'),
     form.get('guestReflection'),
-    form.get('toolPurchaseRequests'),
+    form.get('purchaseRequests'),
     beforeLinks.join('\n'),
     afterLinks.join('\n')
   ];
