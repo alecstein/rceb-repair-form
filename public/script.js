@@ -243,7 +243,6 @@ function openPhotosAfter(inputId) {
 	input.click()
 }
 
-
 async function registerVolunteer() {
 
 	showLoading()
@@ -291,6 +290,18 @@ form.addEventListener('submit', async event => {
 
 	try {
 		const formData = new FormData(form);
+
+		const products = await getProductTypes();
+		const brands = await getBrandNames();
+
+		const product = formData.get('product-type').trim().toLowerCase();
+		const brand = formData.get('brand-name').trim().toLowerCase();
+
+		const productExists = products.some(name => name.trim().toLowerCase() === product);
+		const brandExists = brands.some(name => name.trim().toLowerCase() === brand);
+
+		formData.set('product-status', productExists ? 'existing' : 'new');
+		formData.set('brand-status', brand ? (brandExists ? 'existing' : 'new') : '');
 
 		for (const photo of beforePhotos) formData.append('beforePhotos', photo);
 			for (const photo of afterPhotos) formData.append('afterPhotos', photo);

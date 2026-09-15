@@ -87,8 +87,10 @@ export default async request => {
     form.get('volunteer-name'),
     form.get('guest-name'),
     form.get('product-type'),
+    form.get('product-status')
     form.get('category'),
     form.get('brand-name'),
+    form.get('brand-status'),
     form.get('modelInfo'),
     beforeLinks.join('\n'),
     form.get('condition'),
