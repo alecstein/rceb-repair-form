@@ -124,7 +124,7 @@ function showSuggestedOptions(input, suggestions, myList) {
 	// choices, don't show "add new"
 	if (
 	    input.id === 'volunteer-name' &&
-	    myList.some(name => name.toLocaleLowerCase().trim() === value)
+	    myList.some(name => name() === value)
 	) return;
 
 	if (value == "") return;
