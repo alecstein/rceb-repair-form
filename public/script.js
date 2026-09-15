@@ -6,28 +6,28 @@ var beforePhotos = [];
 var afterPhotos = [];
 var form = document.querySelector('form');
 
-function id(elementId) {
+function byId(elementId) {
 	return document.getElementById(elementId);
 }
 
 function hide(elementId) {
-	id(elementId).style.display = 'none';
+	byId(elementId).style.display = 'none';
 }
 
 function show(elementId) {
-	id(elementId).style.display = 'block';
+	byId(elementId).style.display = 'block';
 }
 
 function showLoading() {
-	id('loading-indicator').style.display = 'flex';
+	byId('loading-indicator').style.display = 'flex';
 }
 
 function makeRequired(elementId) {
-	id(elementId).required = true;
+	byId(elementId).required = true;
 }
 
 function makeNotRequired(elementId) {
-	id(elementId).required = false;
+	byId(elementId).required = false;
 }
 
 const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -72,50 +72,25 @@ async function getBrandNames() {
 }
 
 async function setCategories() {
-  const categories = await getCategories();
-  const select = id('category');
+	const categories = await getCategories();
+	const select = byId('category');
 
-  for (const category of categories) {
-    const option = document.createElement('option');
-    option.value = category;
-    option.textContent = category;
-    select.appendChild(option);
-  }
-}
-
-setCategories();
-
-function addSuggestedOptions(inputId, suggestionsId, myList, addNewFunction) {
-	const input = document.getElementById(inputId);
-	const suggestions = document.getElementById(suggestionsId);
-
-	input.oninput = () => showSuggestedOptions(input, suggestions, myList, addNewFunction);
-	input.onfocus = () => showSuggestedOptions(input, suggestions, myList, addNewFunction);
-}
-
-async function setSuggestedOptions() {
-	const volunteerList = await getVolunteers();
-	addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList, addNewVolunteer)
-
-	const productTypeList = await getProductTypes();
-	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList, addNewProductType)
-
-	const brandNameList = await getBrandNames();
-	addSuggestedOptions("brand-name", "brand-name-suggestions", brandNameList, addNewBrandName)
+	for (const category of categories) {
+		const option = document.createElement('option');
+		option.value = category;
+		option.textContent = category;
+		select.appendChild(option);
+	}
 }
 
 
-function showSuggestedOptions(input, suggestions, myList, addNewFunction) {
+function showSuggestedOptions(input, suggestions, myList) {
 	const value = input.value.toLocaleLowerCase().trim();
-
 	// clear all the suggestions
 	suggestions.innerHTML = "";
-
 	if (value == "") return;
-
 	const filtered = myList.filter(
-		q => q.toLocaleLowerCase().includes(value)
-		);
+		q => q.toLocaleLowerCase().includes(value));
 
 	for (const el of filtered) {
 		const li = document.createElement("li");
@@ -126,16 +101,36 @@ function showSuggestedOptions(input, suggestions, myList, addNewFunction) {
 		})
 		suggestions.appendChild(li);
 	}
+}
 
-	// if the options isn't available,
-	// we want to able to add a new item
+function addSuggestedOptions(inputId, suggestionsId, myList) {
+	const input = byId(inputId);
+	const suggestions = byId(suggestionsId);
+
+	input.oninput = () => showSuggestedOptions(input, suggestions, myList);
+	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
+}
+
+async function setSuggestedOptions() {
+	const volunteerList = await getVolunteers();
+	addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
+
+	// we do something special for the volunteer field
+	// this is bad practice but whatever
+	volunteerSuggestions = byId('volunteer-name-suggestions');
 	const addNew = document.createElement("li");
 	addNew.textContent = "+ Add new";
 	addNew.addEventListener("click", ()=>{
-		addNewFunction();
-		suggestions.innerHTML = '';
+		addNewVolunteer();
+		volunteerSuggestions.innerHTML = '';
 	})
-	suggestions.appendChild(addNew);
+	volunteerSuggestions.appendChild(addNew);
+
+	const productTypeList = await getProductTypes();
+	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList)
+
+	const brandNameList = await getBrandNames();
+	addSuggestedOptions("brand-name", "brand-name-suggestions", brandNameList)
 }
 
 function addNewVolunteer() {
@@ -181,7 +176,7 @@ function cancelAddNewVolunteer() {
 	hide('register')
 }
 
-id('add-volunteer-cancel').addEventListener("click", () => cancelAddNewVolunteer())
+byId('add-volunteer-cancel').addEventListener("click", () => cancelAddNewVolunteer())
 
 // if we have too many photos we wanna stop the user
 // from adding them 
@@ -190,10 +185,10 @@ function checkPhotoLimit() {
 		'#camera-button-before-ios button, #camera-button-before-other button'
 		)) {button.disabled = beforePhotos.length >= 5;}
 
-	for (const button of document.querySelectorAll(
-		'#camera-button-after-ios button, #camera-button-after-other button'
-		)) {button.disabled = afterPhotos.length >= 5;}
-}
+		for (const button of document.querySelectorAll(
+			'#camera-button-after-ios button, #camera-button-after-other button'
+			)) {button.disabled = afterPhotos.length >= 5;}
+	}
 
 // basically
 // 1. checks if there are too many photos uploaded, 
@@ -224,7 +219,7 @@ function addPhotos(input, photos, thumbnailsId) {
 		};
 
 		thumbnail.append(image, remove);
-		id(thumbnailsId).appendChild(thumbnail);
+		byId(thumbnailsId).appendChild(thumbnail);
 	}
 
 	input.value = '';
@@ -233,7 +228,7 @@ function addPhotos(input, photos, thumbnailsId) {
 }
 
 function openPhotosBefore(inputId) {
-	const input = id(inputId);
+	const input = byId(inputId);
 	input.onchange = () => {
 		addPhotos(input, beforePhotos, 'before-thumbnails')
 	}
@@ -241,14 +236,13 @@ function openPhotosBefore(inputId) {
 }
 
 function openPhotosAfter(inputId) {
-	const input = id(inputId);
+	const input = byId(inputId);
 	input.onchange = () => {
 		addPhotos(input, afterPhotos, 'after-thumbnails')
 	}
 	input.click()
 }
 
-setSuggestedOptions();
 
 async function registerVolunteer() {
 
@@ -258,9 +252,9 @@ async function registerVolunteer() {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
-			firstName: id('add-volunteer-first-name').value.trim(),
-			lastName: id('add-volunteer-last-name').value.trim(),
-			email: id('add-volunteer-email').value.trim()
+			firstName: byId('add-volunteer-first-name').value.trim(),
+			lastName: byId('add-volunteer-last-name').value.trim(),
+			email: byId('add-volunteer-email').value.trim()
 		})
 	});
 
@@ -282,53 +276,54 @@ async function registerVolunteer() {
 		throw new Error('Registered, but could not refresh their name');
 	}
 
-	id('add-volunteer-cancel').click();
-	id('volunteer-name').value = volunteer.name;
+	byId('add-volunteer-cancel').click();
+	byId('volunteer-name').value = volunteer.name;
 
 	hide('loading-indicator')
 }
 
-function addNewProductType () {};
-function addNewBrandName () {};
-
 form.addEventListener('submit', async event => {
-  event.preventDefault();
+	event.preventDefault();
 
-  if (!form.reportValidity()) return;
+	if (!form.reportValidity()) return;
 
-  showLoading();
+	showLoading();
 
-  try {
-    const formData = new FormData(form);
+	try {
+		const formData = new FormData(form);
 
-    for (const photo of beforePhotos) formData.append('beforePhotos', photo);
-    for (const photo of afterPhotos) formData.append('afterPhotos', photo);
+		for (const photo of beforePhotos) formData.append('beforePhotos', photo);
+			for (const photo of afterPhotos) formData.append('afterPhotos', photo);
 
-    const response = await fetch('/api', {
-      method: 'POST',
-      body: formData
-    });
+				const response = await fetch('/api', {
+					method: 'POST',
+					body: formData
+				});
 
-    const result = await response.json();
+			const result = await response.json();
 
-    if (!response.ok || !result.ok) {
-      throw new Error(result.error || 'Could not submit repair');
-    }
+			if (!response.ok || !result.ok) {
+				throw new Error(result.error || 'Could not submit repair');
+			}
 
-    const volunteerName = id('volunteer-name').value;
+			const volunteerName = byId('volunteer-name').value;
 
-    form.reset();
-    id('volunteer-name').value = volunteerName;
+			form.reset();
+			byId('volunteer-name').value = volunteerName;
 
-    beforePhotos = [];
-    afterPhotos = [];
-    checkPhotoLimit();
-    id('before-thumbnails').innerHTML = '';
-    id('after-thumbnails').innerHTML = '';
+			beforePhotos = [];
+			afterPhotos = [];
+			checkPhotoLimit();
+			byId('before-thumbnails').innerHTML = '';
+			byId('after-thumbnails').innerHTML = '';
 
-  } catch (error) {
-    alert(error.message);
-  } finally {
-    hide('loading-indicator');
-  }
-});
+		} catch (error) {
+			alert(error.message);
+		} finally {
+			hide('loading-indicator');
+		}
+	});
+
+
+setCategories();
+setSuggestedOptions();
