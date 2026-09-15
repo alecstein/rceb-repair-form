@@ -106,13 +106,13 @@ function showSuggestedOptions(input, suggestions, myList) {
 
 	// special suggestion for volunteers to add a vol
 	if (input.id === 'volunteer-name') {
-	  const addNew = document.createElement('li');
-	  addNew.textContent = '+ Add new';
-	  addNew.onclick = () => {
-	    addNewVolunteer();
-	    suggestions.innerHTML = '';
-	  };
-	  suggestions.appendChild(addNew);
+		const addNew = document.createElement('li');
+		addNew.textContent = '+ Add new';
+		addNew.onclick = () => {
+			addNewVolunteer();
+			suggestions.innerHTML = '';
+		};
+		suggestions.appendChild(addNew);
 	}
 }
 
@@ -316,38 +316,87 @@ form.addEventListener('submit', async event => {
 		formData.set('product-status', productExists ? 'existing' : 'new');
 		formData.set('brand-status', brand ? (brandExists ? 'existing' : 'new') : '');
 
-		for (const photo of beforePhotos) formData.append('beforePhotos', photo);
-			for (const photo of afterPhotos) formData.append('afterPhotos', photo);
+		for (const photo of beforePhotos) {
+			formData.append('beforePhotos', await resizePhoto(photo));
+		}
 
-				const response = await fetch('/api', {
-					method: 'POST',
-					body: formData
-				});
+		for (const photo of afterPhotos) {
+			formData.append('afterPhotos', await resizePhoto(photo));
+		}
 
-			const result = await response.json();
+		const response = await fetch('/api', {
+			method: 'POST',
+			body: formData
+		});
 
-			if (!response.ok || !result.ok) {
-				throw new Error(result.error || 'Could not submit repair');
+		const result = await response.json();
+
+		if (!response.ok || !result.ok) {
+			throw new Error(result.error || 'Could not submit repair');
+		}
+
+		const volunteerName = byId('volunteer-name').value;
+
+		form.reset();
+		byId('volunteer-name').value = volunteerName;
+
+		beforePhotos = [];
+		afterPhotos = [];
+		checkPhotoLimit();
+		byId('before-thumbnails').innerHTML = '';
+		byId('after-thumbnails').innerHTML = '';
+
+	} catch (error) {
+		alert(error.message);
+	} finally {
+		hide('loading-indicator');
+	}
+});
+
+// make a note to understand this
+async function resizePhoto(photo) {
+	const image = new Image();
+	const url = URL.createObjectURL(photo);
+
+	try {
+		image.src = url;
+		await image.decode();
+
+		const canvas = document.createElement('canvas');
+		const context = canvas.getContext('2d');
+
+    // Start with the longest side at most 1600 pixels.
+		const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+		canvas.width = Math.max(1, Math.round(image.width * scale));
+		canvas.height = Math.max(1, Math.round(image.height * scale));
+
+		while (true) {
+      // Give transparent images a white background.
+			context.fillStyle = 'white';
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+			const blob = await new Promise(resolve => {
+				canvas.toBlob(resolve, 'image/jpeg', 0.8);
+			});
+
+			if (!blob) throw new Error('Could not resize photo');
+
+			if (blob.size <= 600 * 1024) {
+				return new File(
+					[blob],
+					photo.name.replace(/\.[^.]+$/, '') + '.jpg',
+					{ type: 'image/jpeg' }
+					);
 			}
 
-			const volunteerName = byId('volunteer-name').value;
-
-			form.reset();
-			byId('volunteer-name').value = volunteerName;
-
-			beforePhotos = [];
-			afterPhotos = [];
-			checkPhotoLimit();
-			byId('before-thumbnails').innerHTML = '';
-			byId('after-thumbnails').innerHTML = '';
-
-		} catch (error) {
-			alert(error.message);
-		} finally {
-			hide('loading-indicator');
+			canvas.width = Math.max(1, Math.floor(canvas.width * 0.8));
+			canvas.height = Math.max(1, Math.floor(canvas.height * 0.8));
 		}
-	});
-
+	} finally {
+		URL.revokeObjectURL(url);
+	}
+}
 
 setCategories();
 setSuggestedOptions();
