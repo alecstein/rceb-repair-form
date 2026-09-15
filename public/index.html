@@ -92,7 +92,7 @@
 			</fieldset>
 
 			<!-- iOS devices -->
-			<div id="camera-button-before-ios" style="display: none">
+			<div id="camera-button-before">
 				Photos before repair [iOS]
 				<div class="muted">(up to 5 photos)</div>
 				<button class="wide-button" type="button" onclick="openPhotosBefore('photo-library')">
@@ -101,15 +101,10 @@
 
 			</div>
 
-			<!-- non-iOS devices -->
-			<div id="camera-button-before-other" style="display: none">Photos before repair [other]
-				<div class="muted">(up to 5 photos)</div>
+			<!-- non-iOS devices only -->
+			<div id="camera-button-before-other" style="display: none">
 				<button class="wide-button" type="button" onclick="openPhotosBefore('camera')">
-					Take photo
-				</button>
-
-				<button class="wide-button" type="button" onclick="openPhotosBefore('photo-library')">
-					Choose existing
+					Take photo with camera
 				</button>
 			</div>
 			<div id="before-thumbnails" class="thumbnails"></div>
@@ -156,7 +151,7 @@
 			</fieldset>
 
 			<!-- iOS devices -->
-			<div id="camera-button-after-ios" style="display: none">
+			<div id="camera-button-after-ios">
 				Photos after repair [iOS]
 				<div class="muted">(up to 5 photos)</div>
 				<button class="wide-button" type="button" onclick="openPhotosAfter('photo-library')">
@@ -165,14 +160,9 @@
 			</div>
 
 			<!-- non-iOS devices -->
-			<div id="camera-button-after-other" style="display: none">Photos after repair [other]
-				<div class="muted">(up to 5 photos)</div>
+			<div id="camera-button-after-other" style="display: none">
 				<button class="wide-button" type="button" onclick="openPhotosAfter('camera')">
-					Take photo
-				</button>
-
-				<button class="wide-button" type="button" onclick="openPhotosAfter('photo-library')">
-					Choose existing
+					Take photo with camera
 				</button>
 			</div>
 			<div id="after-thumbnails" class="thumbnails"></div>

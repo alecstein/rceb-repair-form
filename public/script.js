@@ -29,10 +29,7 @@ const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 || (/Macintosh/i.test(navigator.userAgent)
 	&& navigator.maxTouchPoints > 1);
 
-if (isIOS) {
-	show('camera-button-before-ios');
-	show('camera-button-after-ios');
-} else {
+if (!isIOS) {
 	show('camera-button-before-other');
 	show('camera-button-after-other');
 }
