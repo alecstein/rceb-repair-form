@@ -5,10 +5,10 @@
 	<meta name="viewport" content="width=device-width">
 	<title>RCEB Repair Form</title>
 	<link rel="stylesheet" href="/style.css">
-<!--   <script
+  <script
     src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@4/tsparticles.confetti.bundle.min.js"
     defer
-  ></script> -->
+  ></script>
   <script src="/script.js" defer></script>
 </head>
 <body>
@@ -37,8 +37,8 @@
 
 		<form>
 			<div class="field">
-				<span class="required" id="volunteer-name-title">Your name (volunteer)</span>
-				<span class="required" id="new-volunteer-title">New volunteer registration</span>
+				<span class="required field-title" id="volunteer-name-title">Your name (volunteer)</span>
+				<span class="required field-title" id="new-volunteer-title">New volunteer registration</span>
 				<input type="text" name="volunteer-name" id="volunteer-name" placeholder="First Last"required>
 				<ul class="dropdown" id="volunteer-name-suggestions"></ul>
 
@@ -56,27 +56,37 @@
 			<!-- <div>Don't see your name? <a href="https://forms.gle/ZJxQuCQWcQB1xGxB8">Fill this out</a></div> -->
 
 			<div class="field">
-				<span class="required">Guest name</span>
+				<span class="required field-title">Guest name</span>
 				<input type="text" name="guest-name" placeholder="First Last"required>
 			</div>
+
 			<div class="field">
-				<span class="required">Product type</span>
+				<span class="required field-title">Product type</span>
 				<input autocomplete="off" type="text" list="" name="product-type" id="product-type" placeholder="e.g. Toaster" required>
 				<ul class="dropdown" id="product-type-suggestions"></ul>
 			</div>
+
 			<div class="field">
-				Brand name <span class="muted">(optional)</span>
+				<span class="required field-title">Category</span>
+				<select name="category" id="category" required>>
+				<option value="" disabled selected>Choose a category</option>
+				</select>
+			</div>
+
+			<div class="field">
+				<span class="field-title">Brand name</span> <span class="muted">(optional)</span>
 				<input type="text" name="brand-name" id="brand-name" placeholder="e.g. Bosch" >
 				<ul class="dropdown" id="brand-name-suggestions"></ul>
 			</div>
+
 			<div class="field">
-				Serial or model <span class="muted">(optional)</span>
+				<span class="field-title">Serial or model</span> <span class="muted">(optional)</span>
 				<input type="text" name="modelInfo" placeholder="123X SuperMax" >
 			</div>
 
 			<fieldset>
 				<legend>
-					<span class="required">Item condition on arrival</span>
+					<span class="required field-title">Item condition on arrival</span>
 				</legend>
 				<div class="choice-grid">
 					<label class="choice">
@@ -93,7 +103,7 @@
 
 			<!-- iOS devices -->
 			<div id="camera-button-before">
-				Photos before repair [iOS]
+				<span class="field-title">Photos before repair</span>
 				<div class="muted">(up to 5 photos)</div>
 				<button class="wide-button" type="button" onclick="openPhotosBefore('photo-library')">
 					Add photo
@@ -111,7 +121,7 @@
 
 			<fieldset>
 				<legend>
-					<span class="required">Outcome</span>
+					<span class="required field-title">Outcome</span>
 				</legend>
 				<div class="choice-grid">
 					<label class="choice">
@@ -132,7 +142,7 @@
 
 			<fieldset>
 				<legend>
-					<span class="required">Guest experience</span> 
+					<span class="required field-title">Guest experience</span> 
 				</legend>
 				<div class="choice-grid">
 					<label class="choice">
@@ -152,7 +162,7 @@
 
 			<!-- iOS devices -->
 			<div id="camera-button-after-ios">
-				Photos after repair [iOS]
+				<span class="field-title">Photos during/after repair</span>
 				<div class="muted">(up to 5 photos)</div>
 				<button class="wide-button" type="button" onclick="openPhotosAfter('photo-library')">
 					Add photo
@@ -167,17 +177,17 @@
 			</div>
 			<div id="after-thumbnails" class="thumbnails"></div>
 			<div class="field">
-				Guest notes <span class="muted">(optional)</span>
+				<span class="field-title">Guest notes</span> <span class="muted">(optional)</span>
 				<textarea name="guestReflection" placeholder="Notes on the guest experience (can ask guest)"></textarea>
 			</div>
 
 			<div class="field">
-				Problem and solution <span class="muted">(optional)</span>
+				<span class="field-title">Problem and solution</span> <span class="muted">(optional)</span>
 				<textarea name="problemSolution" placeholder="What was wrong, and what did you do/recommend?"></textarea>
 			</div>
 
 			<div class="field">
-				Tool purchase requests <span class="muted">(optional)</span>
+				<span class="field-title">Tool purchase requests</span> <span class="muted">(optional)</span>
 				<textarea name="toolPurchaseRequests" placeholder="e.g. Torx T10 bits, awl"></textarea>
 			</div>
 

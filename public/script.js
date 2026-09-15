@@ -4,6 +4,7 @@
 
 var beforePhotos = [];
 var afterPhotos = [];
+var form = document.querySelector('form');
 
 function id(elementId) {
 	return document.getElementById(elementId);
@@ -15,6 +16,10 @@ function hide(elementId) {
 
 function show(elementId) {
 	id(elementId).style.display = 'block';
+}
+
+function showLoading() {
+	id('loading-indicator').style.display = 'flex';
 }
 
 function makeRequired(elementId) {
@@ -34,10 +39,26 @@ if (!isIOS) {
 	show('camera-button-after-other');
 }
 
+async function getVolunteers () {
+	const response = await fetch('/.netlify/functions/volunteers')
+	if (!response.ok) {
+		throw new Error("Couldn't get volunteers from Google sheet (check Netlify functions?)")
+	}
+	return await response.json();
+}
+
 async function getProductTypes() {
 	const response = await fetch('/data/products.json');
 	if (!response.ok) {
 		throw new Error("Couldn't load products.json")
+	}
+	return await response.json();
+}
+
+async function getCategories() {
+	const response = await fetch('/data/categories.json');
+	if (!response.ok) {
+		throw new Error("Couldn't load categories.json")
 	}
 	return await response.json();
 }
@@ -48,16 +69,21 @@ async function getBrandNames() {
 		throw new Error("Couldn't load brands.json")
 	}
 	return await response.json();
-
 }
 
-async function getVolunteers () {
-	const response = await fetch('/.netlify/functions/volunteers')
-	if (!response.ok) {
-		throw new Error("Couldn't get volunteers from Google sheet (check Netlify functions?)")
-	}
-	return await response.json();
+async function setCategories() {
+  const categories = await getCategories();
+  const select = id('category');
+
+  for (const category of categories) {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category;
+    select.appendChild(option);
+  }
 }
+
+setCategories();
 
 function addSuggestedOptions(inputId, suggestionsId, myList, addNewFunction) {
 	const input = document.getElementById(inputId);
@@ -135,7 +161,7 @@ function addNewVolunteer() {
 	show('register')
 }
 
-document.getElementById('add-volunteer-cancel').addEventListener("click", () => {
+function cancelAddNewVolunteer() {
 	hide('new-volunteer-title');
 	show('volunteer-name-title');
 
@@ -153,22 +179,20 @@ document.getElementById('add-volunteer-cancel').addEventListener("click", () => 
 
 	hide('add-volunteer-cancel')
 	hide('register')
-})
+}
+
+id('add-volunteer-cancel').addEventListener("click", () => cancelAddNewVolunteer())
 
 // if we have too many photos we wanna stop the user
 // from adding them 
 function checkPhotoLimit() {
 	for (const button of document.querySelectorAll(
 		'#camera-button-before-ios button, #camera-button-before-other button'
-		)) {
-		button.disabled = beforePhotos.length >= 5;
-}
+		)) {button.disabled = beforePhotos.length >= 5;}
 
-for (const button of document.querySelectorAll(
-	'#camera-button-after-ios button, #camera-button-after-other button'
-	)) {
-	button.disabled = afterPhotos.length >= 5;
-}
+	for (const button of document.querySelectorAll(
+		'#camera-button-after-ios button, #camera-button-after-other button'
+		)) {button.disabled = afterPhotos.length >= 5;}
 }
 
 // basically
@@ -227,7 +251,9 @@ function openPhotosAfter(inputId) {
 setSuggestedOptions();
 
 async function registerVolunteer() {
-	id('loading-indicator').style.display = 'flex';
+
+	showLoading()
+
 	const response = await fetch('/.netlify/functions/register-volunteer', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -264,3 +290,45 @@ async function registerVolunteer() {
 
 function addNewProductType () {};
 function addNewBrandName () {};
+
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  if (!form.reportValidity()) return;
+
+  showLoading();
+
+  try {
+    const formData = new FormData(form);
+
+    for (const photo of beforePhotos) formData.append('beforePhotos', photo);
+    for (const photo of afterPhotos) formData.append('afterPhotos', photo);
+
+    const response = await fetch('/api', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || 'Could not submit repair');
+    }
+
+    const volunteerName = id('volunteer-name').value;
+
+    form.reset();
+    id('volunteer-name').value = volunteerName;
+
+    beforePhotos = [];
+    afterPhotos = [];
+    checkPhotoLimit();
+    id('before-thumbnails').innerHTML = '';
+    id('after-thumbnails').innerHTML = '';
+
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    hide('loading-indicator');
+  }
+});

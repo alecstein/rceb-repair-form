@@ -37,7 +37,7 @@ const autocomplete = {
   },
   itemType: {
     input: byId('itemType'), list: 'products',
-    message: 'Choose an item type from the list or add this product.'
+    message: 'Choose an item type from the list.'
   },
   brand: {
     input: byId('brand'), list: 'brands',
@@ -63,7 +63,6 @@ for (const [kind, state] of Object.entries(autocomplete)) {
     );
 
     if (kind === 'brand') byId('brandStatus').value = '';
-    if (kind === 'itemType') byId('itemStatus').value = '';
 
     cancelAutocomplete(state);
     const query = state.input.value.trim();
@@ -222,12 +221,11 @@ function renderAutocomplete(kind, results, query) {
   for (const value of results) {
     addAutocompleteOption(kind, value, value, 'existing');
   }
-  if (kind === 'brand' || kind === 'itemType') {
-    const exactMatch = taxonomyData[state.list].some(
-      value => value.trim().toLocaleLowerCase() === query.toLocaleLowerCase()
+  if (kind === 'brand') {
+    const exactMatch = taxonomyData.brands.some(
+      brand => brand.trim().toLocaleLowerCase() === query.toLocaleLowerCase()
     );
-    const label = kind === 'brand' ? 'brand' : 'product';
-    if (query && !exactMatch) addAutocompleteOption(kind, `+ Add ${label} “${query}”`, query, 'new');
+    if (!exactMatch) addAutocompleteOption(kind, `+ Add brand “${query}”`, query, 'new');
   }
   if (!state.menu.children.length) {
     showAutocompleteMessage(state, 'No matches.');
@@ -249,7 +247,6 @@ function addAutocompleteOption(kind, label, value, status) {
     state.input.setCustomValidity('');
     if (kind === 'volunteerName') saveSetting('repairCafeVolunteerName', value);
     if (kind === 'brand') byId('brandStatus').value = status;
-    if (kind === 'itemType') byId('itemStatus').value = status;
   });
   state.menu.appendChild(button);
 }
@@ -272,7 +269,6 @@ function resetAutocompletes() {
     state.input.setCustomValidity('');
   }
   byId('brandStatus').value = '';
-  byId('itemStatus').value = '';
 }
 
 document.addEventListener('click', event => {

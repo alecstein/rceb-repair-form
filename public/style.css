@@ -82,6 +82,7 @@ h1 {
 .explanation {
 	margin-top: -.5em;
 	margin-bottom: 1em;
+	font-size: 0.9em;
 }
 
 .field, fieldset {
@@ -153,10 +154,25 @@ legend {
 	font-size: .9rem;
 }
 
+.field-title {font-weight: bold}
+
 .wide-button:disabled {
   filter: brightness(85%);
   cursor: default;
   pointer-events: none;
+}
+
+select {
+  display: block;
+  width: 100%;
+  min-height: 2em;
+  box-sizing: border-box;
+  margin-top: 0.3em;
+  padding: 0.7em;
+  font: inherit;
+  font-weight: bold;
+  color: black;
+  background: white;
 }
 
 .thumbnails {
