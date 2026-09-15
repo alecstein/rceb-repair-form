@@ -123,11 +123,11 @@ function showSuggestedOptions(input, suggestions, myList) {
 	// if the user's name exactly equals one of the 
 	// choices, don't show "add new"
 	if (
-	    input.id === 'volunteer-name' &&
-	    myList.some(name => name === value)
-	) return;
+		input.id === 'volunteer-name' &&
+	    input.dataset.selectedName === input.value
+		) return;
 
-	if (value == "") return;
+		if (value == "") return;
 	const filtered = myList.filter(
 		q => q.toLocaleLowerCase().includes(value));
 
@@ -136,6 +136,12 @@ function showSuggestedOptions(input, suggestions, myList) {
 		li.textContent = el;
 		li.addEventListener("click", () => {
 			input.value = el;
+
+			if (input.id === 'volunteer-name') {
+				input.dataset.selectedName = el;
+				input.setCustomValidity('');
+			}
+
 			suggestions.innerHTML = ""
 		})
 		suggestions.appendChild(li);
@@ -153,11 +159,29 @@ function showSuggestedOptions(input, suggestions, myList) {
 	}
 }
 
+// function addSuggestedOptions(inputId, suggestionsId, myList) {
+// 	const input = byId(inputId);
+// 	const suggestions = byId(suggestionsId);
+
+// 	input.oninput = () => showSuggestedOptions(input, suggestions, myList);
+// 	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
+// }
+
 function addSuggestedOptions(inputId, suggestionsId, myList) {
 	const input = byId(inputId);
 	const suggestions = byId(suggestionsId);
 
-	input.oninput = () => showSuggestedOptions(input, suggestions, myList);
+	if (inputId === 'volunteer-name') {
+		input.setCustomValidity('Please choose your name from the dropdown.');
+		input.oninput = () => {
+			if (inputId === 'volunteer-name') {
+				delete input.dataset.selectedName;
+				input.setCustomValidity('Please choose your name from the dropdown.');
+			}
+		}
+		showSuggestedOptions(input, suggestions, myList);
+	};
+
 	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
 }
 
