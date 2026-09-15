@@ -2,11 +2,11 @@ import { googleRequest } from '../lib/google.mjs';
 
 export default async () => {
   try {
-    const spreadsheetId = process.env.VOLUNTEER_SHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = process.env.VOLUNTEER_SHEET_TAB;
 
     if (!spreadsheetId) {
-      throw new Error('Configure VOLUNTEER_SHEET_ID in Netlify.');
+      throw new Error('Configure GOOGLE_SPREADSHEET_ID in Netlify.');
     }
 
     if (!sheetName) {
