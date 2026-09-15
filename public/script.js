@@ -353,6 +353,7 @@ form.addEventListener('submit', async event => {
 			top: 0,
 			behavior: 'smooth'
 		});
+		confetti();
 	} catch (error) {
 		alert(error.message);
 	} finally {
@@ -403,6 +404,18 @@ async function resizePhoto(photo, maxBytes) {
 	} finally {
 		URL.revokeObjectURL(url);
 	}
+}
+
+function confetti() {
+  if (typeof window.confetti !== 'function') return;
+
+  window.confetti({
+    count: 200,
+    spread: 80,
+    startVelocity: 55,
+    position: { x: 50, y: 95 },
+    disableForReducedMotion: true
+  }).catch(console.error);
 }
 
 setCategories();
