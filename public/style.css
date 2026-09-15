@@ -187,6 +187,8 @@ select {
 
 .thumbnails img {
 	display: block;
+	justify-items: flex;
+	margin-top: 1em;
 	width: 110px;
 	height: 110px;
 	border: 1px solid white;
@@ -198,6 +200,7 @@ select {
 
 .thumbnails button {
 	position: absolute;
+	margin-top: 0.5em;
 	top: -6px;
 	right: -6px;
 	width: 30px;
@@ -210,6 +213,10 @@ select {
 	font: 24px Arial, sans-serif;
 	text-align: center;
 	cursor: pointer;
+}
+
+#before-thumbnails, #after-thumbnails {
+	margin-top: 0;
 }
 
 /*stolen from codepen*/
