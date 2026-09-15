@@ -58,32 +58,76 @@ async function uploadPhotos(photos) {
     const link = await uploadPhoto(photo);
     links.push(link);
   }
-  // can rename the link here -- 
-  // this is what links to the file on the google drive
   return links;
 }
 
-async function saveRepair(row) {
+function photoLinkCell(links) {
+  let text = '';
+  const textFormatRuns = [];
+
+  links.forEach((uri, index) => {
+    if (index > 0) {
+      // Stop the previous link before the newline.
+      textFormatRuns.push({ startIndex: text.length, format: {} });
+      text += '\n';
+    }
+
+    textFormatRuns.push({
+      startIndex: text.length,
+      format: {
+        link: { uri },
+        underline: true,
+        foregroundColorStyle: { rgbColor: { red: 0.1, green: 0.3, blue: 0.8 } }
+      }
+    });
+    text += `photo_${index + 1}`;
+  });
+
+  return {
+    userEnteredValue: { stringValue: text },
+    textFormatRuns,
+    userEnteredFormat: { wrapStrategy: 'WRAP' }
+  };
+}
+
+async function saveRepair(row, beforeLinks, afterLinks) {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
-  const sheetName = process.env.GOOGLE_SHEET_NAME.replaceAll("'", "''");
-  const range = `'${sheetName}'!A:Q`;
+  const baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' +
+    encodeURIComponent(spreadsheetId);
 
-  const url =
-  'https://sheets.googleapis.com/v4/spreadsheets/' +
-  encodeURIComponent(spreadsheetId) +
-  '/values/' + encodeURIComponent(range) +
-  ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS';
+  // rich text requests use the tab's numeric ID rather than its name.
+  const spreadsheet = await googleRequest(
+    baseUrl + '?fields=sheets(properties(sheetId,title))'
+  );
+  const sheet = spreadsheet.sheets.find(
+    sheet => sheet.properties.title === process.env.GOOGLE_SHEET_NAME
+  );
+  if (!sheet) throw new Error('Configured Google Sheet tab was not found.');
 
-  await googleRequest(url, {
+  const cells = row.map(value => ({
+    userEnteredValue: { stringValue: String(value ?? '') }
+  }));
+  cells[15] = photoLinkCell(beforeLinks); // Column P
+  cells[16] = photoLinkCell(afterLinks); // Column Q
+
+  // append the values and their links together in one write.
+  await googleRequest(baseUrl + ':batchUpdate', {
     method: 'POST',
-    data: { values: [row] }
+    data: {
+      requests: [{
+        appendCells: {
+          sheetId: sheet.properties.sheetId,
+          rows: [{ values: cells }],
+          fields: 'userEnteredValue,textFormatRuns,userEnteredFormat.wrapStrategy'
+        }
+      }]
+    }
   });
 }
 
 export default async request => {
   const form = await request.formData();
 
-  // can change these links to make them a bit nicer
   const beforeLinks = await uploadPhotos(form.getAll('beforePhotos'));
   const afterLinks = await uploadPhotos(form.getAll('afterPhotos'));
 
@@ -98,17 +142,16 @@ export default async request => {
     form.get('brand-name'),
     form.get('brand-status'),
     form.get('modelInfo'),
-    beforeLinks.join('\n'),
     form.get('condition'),
     form.get('outcome'),
     form.get('experience'),
     form.get('problemSolution'),
     form.get('guestReflection'),
     form.get('toolPurchaseRequests'),
+    beforeLinks.join('\n'),
     afterLinks.join('\n')
   ];
 
-  await saveRepair(row);
-
+  await saveRepair(row, beforeLinks, afterLinks);
   return Response.json({ ok: true });
 };
