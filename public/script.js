@@ -120,6 +120,13 @@ function showSuggestedOptions(input, suggestions, myList) {
 
 	suggestions.innerHTML = "";
 
+	// if the user's name exactly equals one of the 
+	// choices, don't show "add new"
+	if (
+	    input.id === 'volunteer-name' &&
+	    myList.some(name => name.toLocaleLowerCase().trim() === value)
+	) return;
+
 	if (value == "") return;
 	const filtered = myList.filter(
 		q => q.toLocaleLowerCase().includes(value));
