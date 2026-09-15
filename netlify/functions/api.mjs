@@ -133,7 +133,7 @@ export default async request => {
   const form = await request.formData();
   // Generate once so the row and every photo label share the same repair ID.
   // Nine random bytes produce 12 URL-safe characters (72 bits of randomness).
-  const repairId = randomBytes(9).toString('base64url');
+  const repairId = randomBytes(10).toString('base64url');
 
   const beforeLinks = await uploadPhotos(form.getAll('beforePhotos'));
   const afterLinks = await uploadPhotos(form.getAll('afterPhotos'));
