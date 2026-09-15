@@ -26,7 +26,6 @@ textarea {
 	font: inherit;
 	color: black;
 	padding: .7em .7em;
-	font-weight: bold;
 }
 
 input {
@@ -104,7 +103,7 @@ textarea {
 .choice-grid {
 	display: grid;
 	grid-template-columns: 1fr;
-	gap: 1rem;
+	gap: 0.4rem;
 }
 
 .choice {
@@ -175,10 +174,14 @@ select {
   background: white;
 }
 
+.choice {
+	font-weight: bold;
+}
+
 .thumbnails {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 1rem;
+	gap: 0.4rem;
 }
 
 .thumbnails img {
@@ -218,7 +221,7 @@ select {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(250, 250, 250, 0.2);
+  background: rgba(250, 250, 250, 0.4);
   z-index: 9999;
 }
 
