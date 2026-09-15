@@ -124,7 +124,7 @@ function showSuggestedOptions(input, suggestions, myList) {
 	// choices, don't show "add new"
 	if (
 		input.id === 'volunteer-name' &&
-	    input.dataset.selectedName === input.value
+		input.dataset.selectedName === input.value
 		) return;
 
 		if (value == "") return;
@@ -168,21 +168,24 @@ function showSuggestedOptions(input, suggestions, myList) {
 // }
 
 function addSuggestedOptions(inputId, suggestionsId, myList) {
-	const input = byId(inputId);
-	const suggestions = byId(suggestionsId);
+    const input = byId(inputId);
+    const suggestions = byId(suggestionsId);
+    const isVolunteer = inputId === 'volunteer-name';
 
-	if (inputId === 'volunteer-name') {
-		input.setCustomValidity('Please choose your name from the dropdown.');
-		input.oninput = () => {
-			if (inputId === 'volunteer-name') {
-				delete input.dataset.selectedName;
-				input.setCustomValidity('Please choose your name from the dropdown.');
-			}
-		}
-		showSuggestedOptions(input, suggestions, myList);
-	};
+    if (isVolunteer) {
+        input.setCustomValidity('Please choose your name from the dropdown.');
+    }
 
-	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
+    input.oninput = () => {
+        if (isVolunteer) {
+            delete input.dataset.selectedName;
+            input.setCustomValidity('Please choose your name from the dropdown.');
+        }
+
+        showSuggestedOptions(input, suggestions, myList);
+    };
+
+    input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
 }
 
 async function setSuggestedOptions() {
