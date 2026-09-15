@@ -5,15 +5,15 @@
 	--red: #f66;
 }
 
-#add-volunteer-first-name, 
-#add-volunteer-last-name, 
-#add-volunteer-email, 
-#add-volunteer-cancel, 
+#new-volunteer-first-name, 
+#new-volunteer-last-name, 
+#new-volunteer-email, 
+#new-volunteer-cancel, 
 #new-volunteer-title,
 #register,
 #invalid-email,
-#camera-button-before-non-ios,
-#camera-button-after-non-ios,
+#camera-before-non-ios,
+#camera-after-non-ios,
 #camera,
 #photo-library,
 #max-photos-before, 

@@ -37,6 +37,25 @@ function makeNotRequired(elementId) {
 	byId(elementId).required = false;
 }
 
+// TODO check this
+function addNewVolunteer() {
+	show('new-volunteer');
+	hide('existing-volunteer');
+	makeRequired('new-volunteer-first-name');
+	makeRequired('new-volunteer-last-name');
+	makeRequired('new-volunteer-email');
+	makeNotRequired('volunteer-name')
+}
+
+function cancelAddNewVolunteer() {
+	hide('new-volunteer');
+	show('existing-volunteer');
+	makeNotRequired('new-volunteer-first-name');
+	makeNotRequired('new-volunteer-last-name');
+	makeNotRequired('new-volunteer-email');
+	makeRequired('volunteer-name')
+}
+
 function isValidEmail(email) {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -99,7 +118,6 @@ async function setCategories() {
 function showSuggestedOptions(input, suggestions, myList) {
 	const value = input.value.toLocaleLowerCase().trim();
 
-	// clear all the suggestions
 	suggestions.innerHTML = "";
 
 	if (value == "") return;
@@ -137,54 +155,14 @@ function addSuggestedOptions(inputId, suggestionsId, myList) {
 }
 
 async function setSuggestedOptions() {
-	// const volunteerList = await getVolunteers();
-	// addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
+	const volunteerList = await getVolunteers();
+	addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
 
 	const productTypeList = await getProductTypes();
 	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList)
 
 	const brandNameList = await getBrandNames();
 	addSuggestedOptions("brand-name", "brand-name-suggestions", brandNameList)
-}
-
-function addNewVolunteer() {
-	show('new-volunteer-title');
-	hide('volunteer-name-title');
-
-	show('add-volunteer-first-name');
-	makeRequired('add-volunteer-first-name');
-
-	show('add-volunteer-last-name');
-	makeRequired('add-volunteer-last-name');
-
-	show('add-volunteer-email')
-	makeRequired('add-volunteer-email');
-
-	hide('volunteer-name')
-	makeNotRequired('volunteer-name')
-
-	show('add-volunteer-cancel')
-	show('register')
-}
-
-function cancelAddNewVolunteer() {
-	hide('new-volunteer-title');
-	show('volunteer-name-title');
-
-	hide('add-volunteer-first-name');
-	makeNotRequired('add-volunteer-first-name');
-
-	hide('add-volunteer-last-name');
-	makeNotRequired('add-volunteer-last-name');
-
-	hide('add-volunteer-email')
-	makeNotRequired('add-volunteer-email');
-
-	show('volunteer-name')
-	makeRequired('volunteer-name')
-
-	hide('add-volunteer-cancel')
-	hide('register')
 }
 
 // if we have too many photos we wanna stop the user
@@ -275,9 +253,9 @@ async function registerVolunteer() {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
-			firstName: byId('add-volunteer-first-name').value.trim(),
-			lastName: byId('add-volunteer-last-name').value.trim(),
-			email: byId('add-volunteer-email').value.trim()
+			firstName: byId('new-volunteer-first-name').value.trim(),
+			lastName: byId('new-volunteer-last-name').value.trim(),
+			email: byId('new-volunteer-email').value.trim()
 		})
 	});
 
@@ -299,7 +277,7 @@ async function registerVolunteer() {
 		throw new Error('Registered, but could not refresh their name');
 	}
 
-	byId('add-volunteer-cancel').click();
+	byId('new-volunteer-cancel').click();
 	byId('volunteer-name').value = volunteer.name;
 
 	hide('loading-indicator')
@@ -433,6 +411,6 @@ form.addEventListener('submit', async event => {
 	}
 });
 
-checkValidEmail('add-volunteer-email')
+checkValidEmail('new-volunteer-email')
 setCategories();
 setSuggestedOptions();

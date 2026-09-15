@@ -37,21 +37,23 @@
 
 		<form>
 			<div class="field">
-				<span class="required field-title" id="volunteer-name-title">Your name (volunteer)</span>
-				<span class="required field-title" id="new-volunteer-title">New volunteer registration</span>
-				<input type="text" name="volunteer-name" id="volunteer-name" placeholder="First Last"required>
-				<ul class="dropdown" id="volunteer-name-suggestions"></ul>
+				<div id="existing-volunteer">
+					<span class="required field-title" id="volunteer-name-title">Your name (volunteer)</span>
+					<input type="text" name="volunteer-name" id="volunteer-name" placeholder="First Last"required>
+					<ul class="dropdown" id="volunteer-name-suggestions"></ul>
+				</div>
+				<div id="new-volunteer">
+					<span class="required field-title" id="new-volunteer-title">New volunteer registration</span>
+					<input type="text" name="new-volunteer-first-name" id="new-volunteer-first-name" placeholder="First">
 
-				<input type="text" name="add-volunteer-first-name" id="add-volunteer-first-name" placeholder="First">
+					<input type="text" name="new-volunteer-last-name" id="new-volunteer-last-name" placeholder="Last">
 
-				<input type="text" name="add-volunteer-last-name" id="add-volunteer-last-name" placeholder="Last">
-
-				<input type="text" name="add-volunteer-email" id="add-volunteer-email" placeholder="your-email@example.com">
-				<div class="invalid" id="invalid-email">enter a valid email address</div>
+					<input type="text" name="new-volunteer-email" id="new-volunteer-email" placeholder="your-email@example.com">
+					<div class="invalid" id="invalid-email">enter a valid email address</div>
+					<button class="wide-button" type="button" id="register" onclick="registerVolunteer()">Register new volunteer</button>
+					<button class="wide-button" type="button" id="add-volunteer-cancel" onclick="cancelAddNewVolunteer()">Cancel</button>
+				</div>
 			</div>	
-
-			<button class="wide-button" type="button" id="register" onclick="registerVolunteer()">Register new volunteer</button>
-			<button class="wide-button" type="button" id="add-volunteer-cancel" onclick="cancelAddNewVolunteer()">Cancel</button>
 
 			<div class="field">
 				<span class="required field-title">Guest name</span>
