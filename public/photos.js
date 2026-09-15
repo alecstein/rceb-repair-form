@@ -19,15 +19,18 @@ export async function optimizePhoto(file, options = PHOTO_OPTIONS) {
 	const image = new Image();
 	const url = URL.createObjectURL(file);
 	let canvas;
+	let bitmap;
 	try {
 		image.src = url;
 		try {
 			await image.decode();
 		} catch {
-			throw new Error('This image cannot be read. Try exporting it as JPEG or PNG.');
+			const isHeic = /\.hei[cf]$/i.test(file.name) || /^image\/hei[cf](?:-sequence)?$/i.test(file.type);
+			if (!isHeic) throw new Error('This image cannot be read. Try exporting it as JPEG or PNG.');
+			bitmap = await decodeHeic(file);
 		}
-		const width = image.naturalWidth;
-		const height = image.naturalHeight;
+		const width = bitmap ? bitmap.width : image.naturalWidth;
+		const height = bitmap ? bitmap.height : image.naturalHeight;
 		if (!width || !height) throw new Error('This image has no usable dimensions.');
 		const longest = Math.max(width, height);
 		const supported = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
@@ -49,7 +52,7 @@ export async function optimizePhoto(file, options = PHOTO_OPTIONS) {
 			context.fillStyle = 'white';
 			context.fillRect(0, 0, canvas.width, canvas.height);
 			// Always draw the original decoded image, never a previous JPEG.
-			context.drawImage(image, 0, 0, canvas.width, canvas.height);
+			context.drawImage(bitmap || image, 0, 0, canvas.width, canvas.height);
 			for (const quality of qualities) {
 				const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
 				if (!blob || blob.type !== 'image/jpeg') {
@@ -68,6 +71,28 @@ export async function optimizePhoto(file, options = PHOTO_OPTIONS) {
 	} finally {
 		URL.revokeObjectURL(url);
 		image.removeAttribute('src');
+		bitmap?.close();
 		if (canvas) canvas.width = canvas.height = 0;
+	}
+}
+
+export async function decodeHeic(file) {
+	let worker;
+	let timeout;
+	try {
+		return await new Promise((resolve, reject) => {
+			worker = new Worker(new URL('./heic-worker.js', import.meta.url), { type: 'module' });
+			timeout = setTimeout(() => reject(new Error('HEIC processing took too long. Try a smaller photo or export it as JPEG.')), 30_000);
+			worker.onmessage = ({ data }) => {
+				if (data.bitmap) resolve(data.bitmap);
+				else reject(new Error(data.error || 'This HEIC photo could not be decoded.'));
+			};
+			worker.onerror = () => reject(new Error('The HEIC decoder could not load. Check your connection and try again, or export the photo as JPEG.'));
+			worker.onmessageerror = () => reject(new Error('The HEIC decoder could not return this photo. Try exporting it as JPEG.'));
+			worker.postMessage(file);
+		});
+	} finally {
+		clearTimeout(timeout);
+		worker?.terminate();
 	}
 }
