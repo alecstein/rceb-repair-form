@@ -38,7 +38,7 @@ function makeNotRequired(elementId) {
 }
 
 // TODO check this
-function addNewVolunteer() {
+function newVolunteer() {
 	show('new-volunteer');
 	hide('existing-volunteer');
 	makeRequired('new-volunteer-first-name');
@@ -47,7 +47,7 @@ function addNewVolunteer() {
 	makeNotRequired('volunteer-name')
 }
 
-function cancelAddNewVolunteer() {
+function cancelNewVolunteer() {
 	hide('new-volunteer');
 	show('existing-volunteer');
 	makeNotRequired('new-volunteer-first-name');
@@ -139,7 +139,7 @@ function showSuggestedOptions(input, suggestions, myList) {
 		const addNew = document.createElement('li');
 		addNew.textContent = '+ Add new';
 		addNew.onclick = () => {
-			addNewVolunteer();
+			newVolunteer();
 			suggestions.innerHTML = '';
 		};
 		suggestions.appendChild(addNew);
@@ -270,7 +270,7 @@ async function registerVolunteer() {
 		'volunteer-name',
 		'volunteer-name-suggestions',
 		volunteerList,
-		addNewVolunteer
+		newVolunteer
 		);
 
 	if (!volunteerList.includes(volunteer.name)) {

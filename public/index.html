@@ -48,10 +48,10 @@
 
 					<input type="text" name="new-volunteer-last-name" id="new-volunteer-last-name" placeholder="Last">
 
-					<input type="text" name="new-volunteer-email" id="new-volunteer-email" placeholder="your-email@example.com">
+					<input type="email" name="new-volunteer-email" id="new-volunteer-email" placeholder="your-email@example.com">
 					<div class="invalid" id="invalid-email">enter a valid email address</div>
 					<button class="wide-button" type="button" id="register" onclick="registerVolunteer()">Register new volunteer</button>
-					<button class="wide-button" type="button" id="add-volunteer-cancel" onclick="cancelAddNewVolunteer()">Cancel</button>
+					<button class="wide-button" type="button" id="new-volunteer-cancel" onclick="cancelNewVolunteer()">Cancel</button>
 				</div>
 			</div>	
 
@@ -68,7 +68,7 @@
 
 			<div class="field">
 				<span class="required field-title">Category</span>
-				<select name="category" id="category" required>>
+				<select name="category" id="category" required>
 					<option value="" disabled selected>Choose a category</option>
 				</select>
 			</div>

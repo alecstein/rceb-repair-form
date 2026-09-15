@@ -5,11 +5,7 @@
 	--red: #f66;
 }
 
-#new-volunteer-first-name, 
-#new-volunteer-last-name, 
-#new-volunteer-email, 
-#new-volunteer-cancel, 
-#new-volunteer-title,
+#new-volunteer,
 #register,
 #invalid-email,
 #camera-before-non-ios,
@@ -57,6 +53,10 @@ h1 {
 .field, fieldset {
 	margin-top: 1.5em;
 	margin-bottom: 1.5em;
+}
+
+.field-title {
+	font-weight: bold
 }
 
 .required::after {
@@ -134,6 +134,7 @@ textarea {
 	padding: .6em;
 	background: white;
 	color: black;
+	font-weight: bold;
 	cursor: pointer;
 }
 
@@ -167,10 +168,8 @@ legend {
 	cursor: pointer;
 }
 
-.field-title {font-weight: bold}
-
 .wide-button:disabled {
-	filter: brightness(85%);
+	filter: brightness(70%);
 	cursor: default;
 	pointer-events: none;
 }
@@ -178,10 +177,6 @@ legend {
 select {
 	margin-top: 0.3em;
 	padding: 0.7em;
-	font-weight: bold;
-}
-
-.choice {
 	font-weight: bold;
 }
 
@@ -194,11 +189,11 @@ select {
 
 .thumbnails img {
 	display: block;
-	justify-items: flex;
 	margin-top: 1em;
 	width: 110px;
 	height: 110px;
 	border: 1px solid white;
+	object-fit: cover;
 }
 
 .thumbnails > div {
@@ -227,7 +222,6 @@ select {
 }
 
 /*stolen from codepen*/
-
 #loading-indicator {
 	display: flex;
 	justify-content: center;
