@@ -23,7 +23,7 @@ export default async (request) => {
   }
 
   try {
-    const spreadsheetId = process.env.VOLUNTEER_SHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = process.env.VOLUNTEER_SHEET_TAB;
 
     if (!spreadsheetId || !sheetName) {
