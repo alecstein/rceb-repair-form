@@ -11,8 +11,12 @@ async function uploadPhoto(photo) {
     mimeType: photo.type
   });
 
-  // Drive expects two parts: file details, then the actual image bytes.
-  // The boundary separates them; \r\n supplies the required line endings.
+  // drive expects ths photo structure:
+  // --- metadata ---
+  // --- header ---
+  // --- photo bytes ---
+  // --- end bytes ---
+  // the \r\n are apparently required
   const metadataPart =
 `--${boundary}\r\n` +
 'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
@@ -54,7 +58,8 @@ async function uploadPhotos(photos) {
     const link = await uploadPhoto(photo);
     links.push(link);
   }
-
+  // can rename the link here -- 
+  // this is what links to the file on the google drive
   return links;
 }
 
@@ -78,10 +83,11 @@ async function saveRepair(row) {
 export default async request => {
   const form = await request.formData();
 
+  // can change these links to make them a bit nicer
   const beforeLinks = await uploadPhotos(form.getAll('beforePhotos'));
   const afterLinks = await uploadPhotos(form.getAll('afterPhotos'));
 
-  // Values are written left to right into spreadsheet columns A through Q.
+
   const row = [
     new Date().toISOString(),
     form.get('volunteer-name'),

@@ -8,12 +8,12 @@ export default async () => {
     if (!spreadsheetId) {
       throw new Error('Configure GOOGLE_SPREADSHEET_ID in Netlify.');
     }
-
     if (!sheetName) {
       throw new Error('Configure VOLUNTEER_SHEET_TAB in Netlify.');
     }
-
-    // Full Name is column D, starting below the header row.
+    // A         / B          / C         / D          / E 
+    // timestamp / first name / last name / full name  / email
+    // 1972-1-1  / Mark       / Smith     / Mark Smith / mark@smith.com
     const escapedSheetName = sheetName.replace(/'/g, "''");
     const range = `'${escapedSheetName}'!D2:D`;
 
@@ -24,14 +24,15 @@ export default async () => {
 
     const data = await googleRequest(url);
 
+    // TODO 
     const volunteers = [
       ...new Set(
         (data.values || [])
           .flat()
           .map(name => String(name).trim())
-          .filter(Boolean)
+          .filter(Boolean) // not sure what this does
       )
-    ].sort((a, b) => a.localeCompare(b));
+    ].sort((a, b) => a.localeCompare(b)); // alphabetical order
 
     return new Response(JSON.stringify(volunteers), {
       status: 200,
@@ -41,10 +42,10 @@ export default async () => {
       }
     });
   } catch (error) {
-    console.error('Could not load volunteers:', error);
+    console.error("Couldn't get list of registered volunteers.", error);
 
     return new Response(
-      JSON.stringify({ error: 'Could not load volunteers.' }),
+      JSON.stringify({ error: "Couldn't get list of volunteers." }),
       {
         status: 500,
         headers: {

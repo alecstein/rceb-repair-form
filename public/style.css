@@ -1,41 +1,8 @@
 :root {
-	--green: #18371d;
+	--green: #052505;
 	--muted: #ccc;
-	--required: #ff3b30;
-	--purple: #7b3fb4;
-}
-
-body {
-	background: var(--green);
-	color: white;
-	background-image: url('/images/tools.png');
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 19px;
-	margin: 1em;
-}
-
-input, li, textarea, .choice, .wide-button {
-	box-sizing: border-box;
-}
-
-input[type="text"],
-textarea {
-	display: block;
-	width: 100%;
-	min-height: 2em;
-	font: inherit;
-	color: black;
-	padding: .7em .7em;
-}
-
-input {
-	margin-top: 0.3em;
-	margin-bottom: 0.3em;
-}
-
-textarea {
-	min-height: 4em;
-	resize: vertical;
+	--purple: #83b;
+	--red: #f66;
 }
 
 #add-volunteer-first-name, 
@@ -43,39 +10,35 @@ textarea {
 #add-volunteer-email, 
 #add-volunteer-cancel, 
 #new-volunteer-title,
-#register {
+#register,
+#invalid-email,
+#camera-button-before-non-ios,
+#camera-button-after-non-ios,
+#camera,
+#photo-library {
 	display: none;
 }
 
-.dropdown {
-	list-style-type: none;
-	margin: 0;
-	padding: 0;
+body {
+	background: var(--green);
+	background-image: url('/images/tools.png');
+	color: white;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 19px;
+	margin: 1em 1em 20em 1em;
 }
 
-.dropdown li {
+.rceb-logo {
 	display: block;
 	width: 100%;
-	background: white;
-	color: black;
-	padding: 0.5em;
-}
-
-.dropdown:hover li:hover {
-	background: #eee;
+	max-width: 300px;
+	height: auto;
 }
 
 h1 {
 	font-size: 1.5em;
 	line-height: .95;
 	text-transform: uppercase;
-}
-
-.rceb-logo {
-	display: block;
-	width: 100%;
-	max-width: 400px;
-	height: auto;
 }
 
 .explanation {
@@ -91,26 +54,77 @@ h1 {
 
 .required::after {
 	content:" *";
-	color: red;
+	color: var(--red);
 	display: inline;
 	font-weight: bold;
 }
 
-textarea {
+.muted {
+	color: var(--muted);
+	font-size: .9rem;
+}
+
+input, 
+li, 
+textarea, 
+.choice, 
+.wide-button,
+select {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	font: inherit;
+	color: black;
+	min-height: 2em;
+}
+
+input {
 	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+}
+
+input[type="text"],
+textarea {
+	padding: .7em .7em;
+}
+
+textarea {
+	min-height: 5em;
+	margin-top: 0.3em;
+	resize: vertical;
+}
+
+.dropdown {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+.dropdown li {
+	background: white;
+	padding:1em;
+	border-bottom: 1px solid var(--muted);
+}
+
+.dropdown:hover li:hover {
+	background: #eee;
+}
+
+.invalid {
+	font-size: 0.9em;
+	color: var(--red);
 }
 
 .choice-grid {
 	display: grid;
 	grid-template-columns: 1fr;
-	gap: 0.4rem;
+	gap: 0.2rem;
 }
 
 .choice {
 	display: flex;
 	align-items: center;
-	min-height: 2em;
-	padding: 1em;
+	padding: .6em;
 	background: white;
 	color: black;
 	cursor: pointer;
@@ -136,10 +150,8 @@ legend {
 }
 
 .wide-button {
-	display: block;
-	width: 100%;
-	margin: 0.5em 0;
-	padding: 0.8em;
+	margin: 0.5em 0 0 0;
+	padding: 0.7em;
 	font: inherit;
 	font-weight: bold;
 	background: var(--purple);
@@ -148,30 +160,18 @@ legend {
 	cursor: pointer;
 }
 
-.muted {
-	color: var(--muted);
-	font-size: .9rem;
-}
-
 .field-title {font-weight: bold}
 
 .wide-button:disabled {
-  filter: brightness(85%);
-  cursor: default;
-  pointer-events: none;
+	filter: brightness(85%);
+	cursor: default;
+	pointer-events: none;
 }
 
 select {
-  display: block;
-  width: 100%;
-  min-height: 2em;
-  box-sizing: border-box;
-  margin-top: 0.3em;
-  padding: 0.7em;
-  font: inherit;
-  font-weight: bold;
-  color: black;
-  background: white;
+	margin-top: 0.3em;
+	padding: 0.7em;
+	font-weight: bold;
 }
 
 .choice {
@@ -181,13 +181,15 @@ select {
 .thumbnails {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4rem;
+	gap: 0.3rem;
+	margin-top: 1em;
 }
 
 .thumbnails img {
 	display: block;
-	width: 90px;
-	height: 90px;
+	width: 110px;
+	height: 110px;
+	border: 1px solid white;
 }
 
 .thumbnails > div {
@@ -195,66 +197,66 @@ select {
 }
 
 .thumbnails button {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: black;
-  color: white;
-  font: 24px Arial, sans-serif;
-  text-align: center;
-  cursor: pointer;
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid white;
+	border-radius: 50%;
+	background: black;
+	color: white;
+	font: 24px Arial, sans-serif;
+	text-align: center;
+	cursor: pointer;
 }
 
 /*stolen from codepen*/
 
 #loading-indicator {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(250, 250, 250, 0.4);
-  z-index: 9999;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, 0.8);
+	z-index: 9999;
 }
 
 .lds-hourglass {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
+	display: inline-block;
+	position: relative;
+	width: 80px;
+	height: 80px;
 }
 
 .lds-hourglass:after {
-  content: " ";
-  display: block;
-  border-radius: 50%;
-  width: 0;
-  height: 0;
-  margin: 6px;
-  box-sizing: border-box;
-  border: 26px solid #333;
-  border-color: var(--green) transparent var(--green) transparent;
-  animation: lds-hourglass 1.2s infinite;
+	content: " ";
+	display: block;
+	border-radius: 50%;
+	width: 0;
+	height: 0;
+	margin: 6px;
+	box-sizing: border-box;
+	border: 26px solid #333;
+	border-color: var(--purple) transparent var(--purple) transparent;
+	animation: lds-hourglass 1.2s infinite;
 }
 
 @keyframes lds-hourglass {
-  0% {
-    transform: rotate(0);
-    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
-  }
-  50% {
-    transform: rotate(900deg);
-    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-  }
-  100% {
-    transform: rotate(1800deg);
-  }
+	0% {
+		transform: rotate(0);
+		animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+	}
+	50% {
+		transform: rotate(900deg);
+		animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+	}
+	100% {
+		transform: rotate(1800deg);
+	}
 }

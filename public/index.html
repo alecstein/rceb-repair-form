@@ -46,14 +46,12 @@
 
 				<input type="text" name="add-volunteer-last-name" id="add-volunteer-last-name" placeholder="Last">
 
-				<!-- need email validation here -->
 				<input type="text" name="add-volunteer-email" id="add-volunteer-email" placeholder="your-email@example.com">
+				<div class="invalid" id="invalid-email">enter a valid email address</div>
 			</div>	
 
 			<button class="wide-button" type="button" id="register" onclick="registerVolunteer()">Register new volunteer</button>
-			<button class="wide-button" type="button" id="add-volunteer-cancel">Cancel</button>
-
-			<!-- <div>Don't see your name? <a href="https://forms.gle/ZJxQuCQWcQB1xGxB8">Fill this out</a></div> -->
+			<button class="wide-button" type="button" id="add-volunteer-cancel" onclick="cancelAddNewVolunteer()">Cancel</button>
 
 			<div class="field">
 				<span class="required field-title">Guest name</span>
@@ -81,7 +79,7 @@
 
 			<div class="field">
 				<span class="field-title">Serial or model</span> <span class="muted">(optional)</span>
-				<input type="text" name="modelInfo" placeholder="123X SuperMax" >
+				<input type="text" name="modelInfo" placeholder="e.g. ToastMax 3000" >
 			</div>
 
 			<fieldset>
@@ -112,7 +110,7 @@
 			</div>
 
 			<!-- non-iOS devices only -->
-			<div id="camera-button-before-other" style="display: none">
+			<div id="camera-button-before-non-ios" style="display: none">
 				<button class="wide-button" type="button" onclick="openPhotosBefore('camera')">
 					Open camera
 				</button>
@@ -170,7 +168,7 @@
 			</div>
 
 			<!-- non-iOS devices -->
-			<div id="camera-button-after-other" style="display: none">
+			<div id="camera-button-after-non-ios">
 				<button class="wide-button" type="button" onclick="openPhotosAfter('camera')">
 					Open camera
 				</button>
@@ -208,5 +206,10 @@
 	</main>
 </body>
 </html>
+
+
+<!-- TODO
+REDUCE QUALITY FIRST! WAY BEFORE REDUCING SIZE. MAYBE DEFAULT TO 80% or 75% quality
+ -->
 
 

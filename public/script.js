@@ -4,6 +4,15 @@ var beforePhotos = [];
 var afterPhotos = [];
 var form = document.querySelector('form');
 
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+|| (/Macintosh/i.test(navigator.userAgent)
+	&& navigator.maxTouchPoints > 1);
+
+if (!isIOS) {
+	show('camera-button-before-non-ios');
+	show('camera-button-after-non-ios');
+}
+
 function byId(elementId) {
 	return document.getElementById(elementId);
 }
@@ -28,13 +37,19 @@ function makeNotRequired(elementId) {
 	byId(elementId).required = false;
 }
 
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-|| (/Macintosh/i.test(navigator.userAgent)
-	&& navigator.maxTouchPoints > 1);
+function isValidEmail(email) {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
-if (!isIOS) {
-	show('camera-button-before-other');
-	show('camera-button-after-other');
+function checkValidEmail(inputId) {
+	const input = byId(inputId);
+	input.oninput = () => {
+		if (!isValidEmail(input.value) && input.value) {
+			show('invalid-email')
+		} else {
+			hide('invalid-email')
+		}
+	}
 }
 
 async function getVolunteers () {
@@ -81,7 +96,6 @@ async function setCategories() {
 	}
 }
 
-
 function showSuggestedOptions(input, suggestions, myList) {
 	const value = input.value.toLocaleLowerCase().trim();
 
@@ -102,7 +116,7 @@ function showSuggestedOptions(input, suggestions, myList) {
 		suggestions.appendChild(li);
 	}
 
-	// special suggestion for volunteers to add a vol
+	// special suggestion for volunteers to add a volunteer
 	if (input.id === 'volunteer-name') {
 		const addNew = document.createElement('li');
 		addNew.textContent = '+ Add new';
@@ -123,8 +137,8 @@ function addSuggestedOptions(inputId, suggestionsId, myList) {
 }
 
 async function setSuggestedOptions() {
-	const volunteerList = await getVolunteers();
-	addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
+	// const volunteerList = await getVolunteers();
+	// addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
 
 	const productTypeList = await getProductTypes();
 	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList)
@@ -173,17 +187,15 @@ function cancelAddNewVolunteer() {
 	hide('register')
 }
 
-byId('add-volunteer-cancel').addEventListener("click", () => cancelAddNewVolunteer())
-
 // if we have too many photos we wanna stop the user
 // from adding them 
 function checkPhotoLimit() {
 	for (const button of document.querySelectorAll(
-		'#camera-button-before-ios button, #camera-button-before-other button'
+		'#camera-button-before-ios button, #camera-button-before-non-ios button'
 		)) {button.disabled = beforePhotos.length >= MAX_PHOTOS;}
 
 		for (const button of document.querySelectorAll(
-			'#camera-button-after-ios button, #camera-button-after-other button'
+			'#camera-button-after-ios button, #camera-button-after-non-ios button'
 			)) {button.disabled = afterPhotos.length >= MAX_PHOTOS;}
 	}
 
@@ -278,6 +290,65 @@ async function registerVolunteer() {
 	hide('loading-indicator')
 }
 
+// make a note to understand this
+async function resizePhoto(photo, maxBytes) {
+	const image = new Image();
+	const url = URL.createObjectURL(photo);
+
+	try {
+		image.src = url;
+		await image.decode();
+
+		const canvas = document.createElement('canvas');
+		const context = canvas.getContext('2d');
+
+    // Start with the longest side at most 1600 pixels.
+		const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+		canvas.width = Math.max(1, Math.round(image.width * scale));
+		canvas.height = Math.max(1, Math.round(image.height * scale));
+
+		while (true) {
+      // Give transparent images a white background.
+			context.fillStyle = 'white';
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+			const blob = await new Promise(resolve => {
+				canvas.toBlob(resolve, 'image/jpeg', 0.8);
+			});
+
+			if (!blob) throw new Error('Could not resize photo');
+
+			if (blob.size <= maxBytes) {
+				return new File(
+					[blob],
+					photo.name.replace(/\.[^.]+$/, '') + '.jpg',
+					{ type: 'image/jpeg' }
+					);
+			}
+
+			canvas.width = Math.max(1, Math.floor(canvas.width * 0.8));
+			canvas.height = Math.max(1, Math.floor(canvas.height * 0.8));
+		}
+	} finally {
+		URL.revokeObjectURL(url);
+	}
+}
+
+// stolen from codepen
+function celebrate() {
+  if (typeof window.confetti !== 'function') return;
+
+  window.confetti({
+    count: 1000,
+    spread: 80,
+    ticks: 600,
+    startVelocity: 55,
+    position: { x: 50, y: 95 },
+    disableForReducedMotion: true
+  }).catch(console.error);
+}
+
 form.addEventListener('submit', async event => {
 	event.preventDefault();
 
@@ -347,63 +418,6 @@ form.addEventListener('submit', async event => {
 	}
 });
 
-// make a note to understand this
-async function resizePhoto(photo, maxBytes) {
-	const image = new Image();
-	const url = URL.createObjectURL(photo);
-
-	try {
-		image.src = url;
-		await image.decode();
-
-		const canvas = document.createElement('canvas');
-		const context = canvas.getContext('2d');
-
-    // Start with the longest side at most 1600 pixels.
-		const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
-		canvas.width = Math.max(1, Math.round(image.width * scale));
-		canvas.height = Math.max(1, Math.round(image.height * scale));
-
-		while (true) {
-      // Give transparent images a white background.
-			context.fillStyle = 'white';
-			context.fillRect(0, 0, canvas.width, canvas.height);
-			context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-			const blob = await new Promise(resolve => {
-				canvas.toBlob(resolve, 'image/jpeg', 0.8);
-			});
-
-			if (!blob) throw new Error('Could not resize photo');
-
-			if (blob.size <= maxBytes) {
-				return new File(
-					[blob],
-					photo.name.replace(/\.[^.]+$/, '') + '.jpg',
-					{ type: 'image/jpeg' }
-					);
-			}
-
-			canvas.width = Math.max(1, Math.floor(canvas.width * 0.8));
-			canvas.height = Math.max(1, Math.floor(canvas.height * 0.8));
-		}
-	} finally {
-		URL.revokeObjectURL(url);
-	}
-}
-
-function celebrate() {
-  if (typeof window.confetti !== 'function') return;
-
-  window.confetti({
-    count: 1000,
-    spread: 80,
-    ticks: 600,
-    startVelocity: 55,
-    position: { x: 50, y: 95 },
-    disableForReducedMotion: true
-  }).catch(console.error);
-}
-
+checkValidEmail('add-volunteer-email')
 setCategories();
 setSuggestedOptions();

@@ -5,6 +5,7 @@ export default async (request) => {
     return new Response('Use POST', { status: 405 });
   }
 
+  // not sure what catch is doing here
   const body = await request.json().catch(() => null);
 
   if (!body) {
@@ -15,6 +16,7 @@ export default async (request) => {
   const lastName = String(body.lastName || '').trim();
   const email = String(body.email || '').trim();
 
+  // crude namem & email validation here
   if (!firstName || !lastName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json(
       { error: 'Enter first name, last name, and a valid email' },
