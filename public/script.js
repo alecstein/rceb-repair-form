@@ -1,6 +1,4 @@
-// var volunteerList = [];
-// var productTypeList = [];
-// var brandNameList = [];
+const MAX_PHOTOS = 3;
 
 var beforePhotos = [];
 var afterPhotos = [];
@@ -196,21 +194,21 @@ byId('add-volunteer-cancel').addEventListener("click", () => cancelAddNewVolunte
 function checkPhotoLimit() {
 	for (const button of document.querySelectorAll(
 		'#camera-button-before-ios button, #camera-button-before-other button'
-		)) {button.disabled = beforePhotos.length >= 5;}
+		)) {button.disabled = beforePhotos.length >= MAX_PHOTOS;}
 
 		for (const button of document.querySelectorAll(
 			'#camera-button-after-ios button, #camera-button-after-other button'
-			)) {button.disabled = afterPhotos.length >= 5;}
+			)) {button.disabled = afterPhotos.length >= MAX_PHOTOS;}
 	}
 
 // basically
 // 1. checks if there are too many photos uploaded, 
-// stops after the first 5
+// stops after the first MAX_PHOTOS
 // 2. adds thumbnails with buttons that will remove 
 // those thumbnails (and thumbnail removal buttons)
 function addPhotos(input, photos, thumbnailsId) {
 	for (const file of input.files) {
-		if (photos.length >= 5) break;
+		if (photos.length >= MAX_PHOTOS) break;
 
 		photos.push(file);
 
@@ -346,6 +344,10 @@ form.addEventListener('submit', async event => {
 		byId('before-thumbnails').innerHTML = '';
 		byId('after-thumbnails').innerHTML = '';
 
+		window.scrollTo({
+		  top: 0,
+		  behavior: 'smooth'
+		});
 	} catch (error) {
 		alert(error.message);
 	} finally {
