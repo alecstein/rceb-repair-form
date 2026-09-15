@@ -410,8 +410,9 @@ function celebrate() {
   if (typeof window.confetti !== 'function') return;
 
   window.confetti({
-    count: 200,
+    count: 1000,
     spread: 80,
+    ticks: 600,
     startVelocity: 55,
     position: { x: 50, y: 95 },
     disableForReducedMotion: true
