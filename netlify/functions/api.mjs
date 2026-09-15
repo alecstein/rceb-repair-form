@@ -2,7 +2,7 @@
 // this function sends the form details to Netlify and sends
 // which then updates the google sheet
 
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { googleRequest } from '../lib/google.mjs';
 
 async function uploadPhoto(photo) {
@@ -65,7 +65,7 @@ async function uploadPhotos(photos) {
   return links;
 }
 
-function photoLinkCell(links) {
+function photoLinkCell(links, repairId, stage) {
   let text = '';
   const textFormatRuns = [];
 
@@ -84,7 +84,7 @@ function photoLinkCell(links) {
         foregroundColorStyle: { rgbColor: { red: 0.1, green: 0.3, blue: 0.8 } }
       }
     });
-    text += `photo_${index + 1}`;
+    text += `${repairId}_${stage}_${index + 1}`;
   });
 
   return {
@@ -94,7 +94,7 @@ function photoLinkCell(links) {
   };
 }
 
-async function saveRepair(row, beforeLinks, afterLinks) {
+async function saveRepair(row, beforeLinks, afterLinks, repairId) {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
   const baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' +
     encodeURIComponent(spreadsheetId);
@@ -111,8 +111,8 @@ async function saveRepair(row, beforeLinks, afterLinks) {
   const cells = row.map(value => ({
     userEnteredValue: { stringValue: String(value ?? '') }
   }));
-  cells[16] = photoLinkCell(beforeLinks); // Column Q
-  cells[17] = photoLinkCell(afterLinks); // Column R
+  cells[17] = photoLinkCell(beforeLinks, repairId, 'before'); // Column R
+  cells[18] = photoLinkCell(afterLinks, repairId, 'after'); // Column S
 
   // append the values and their links together in one write.
   await googleRequest(baseUrl + ':batchUpdate', {
@@ -131,12 +131,16 @@ async function saveRepair(row, beforeLinks, afterLinks) {
 
 export default async request => {
   const form = await request.formData();
+  // Generate once so the row and every photo label share the same repair ID.
+  // Nine random bytes produce 12 URL-safe characters (72 bits of randomness).
+  const repairId = randomBytes(9).toString('base64url');
 
   const beforeLinks = await uploadPhotos(form.getAll('beforePhotos'));
   const afterLinks = await uploadPhotos(form.getAll('afterPhotos'));
 
 
   const row = [
+    repairId,
     new Date().toISOString(),
     form.get('volunteer-name'),
     form.get('guest-name'),
@@ -152,10 +156,11 @@ export default async request => {
     form.get('problemSolution'),
     form.get('guestReflection'),
     form.get('purchaseRequests'),
+    '', 
     beforeLinks.join('\n'),
     afterLinks.join('\n')
   ];
 
-  await saveRepair(row, beforeLinks, afterLinks);
-  return Response.json({ ok: true });
+  await saveRepair(row, beforeLinks, afterLinks, repairId);
+  return Response.json({ ok: true, repairId });
 };
