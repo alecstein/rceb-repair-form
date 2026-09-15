@@ -126,17 +126,6 @@ async function setSuggestedOptions() {
 	const volunteerList = await getVolunteers();
 	addSuggestedOptions("volunteer-name", "volunteer-name-suggestions", volunteerList)
 
-	// we do something special for the volunteer field
-	// this is bad practice but whatever
-	// volunteerSuggestions = byId('volunteer-name-suggestions');
-	// const addNew = document.createElement("li");
-	// addNew.textContent = "+ Add new";
-	// addNew.addEventListener("click", ()=>{
-	// 	addNewVolunteer();
-	// 	volunteerSuggestions.innerHTML = '';
-	// })
-	// volunteerSuggestions.appendChild(addNew);
-
 	const productTypeList = await getProductTypes();
 	addSuggestedOptions("product-type", "product-type-suggestions", productTypeList)
 
@@ -145,9 +134,6 @@ async function setSuggestedOptions() {
 }
 
 function addNewVolunteer() {
-	// on submission, this gets added to our google sheet
-	// a successful submission involves talking to both sheets
-	// but maybe we can put this list on the same sheet? different page?
 	show('new-volunteer-title');
 	hide('volunteer-name-title');
 
