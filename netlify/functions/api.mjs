@@ -7,12 +7,12 @@ import { googleRequest } from '../lib/google.mjs';
 
 const TIME_ZONE = 'America/New_York';
 
-async function uploadPhoto(photo) {
+async function uploadPhoto(photo, name) {
   const folderId = process.env.GOOGLE_PHOTO_FOLDER_ID;
   const boundary = 'photo_' + randomUUID();
 
   const metadata = JSON.stringify({
-    name: photo.name,
+    name: name,
     parents: [folderId],
     mimeType: photo.type
   });
@@ -57,13 +57,21 @@ const result = await googleRequest(url, {
 return `https://drive.google.com/file/d/${result.id}/view`;
 }
 
-async function uploadPhotos(photos) {
+async function uploadPhotos(photos, repairId, stage) {
   const links = [];
 
-  for (const photo of photos) {
-    const link = await uploadPhoto(photo);
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+
+    const extensionMatch = photo.name.match(/\.[^.]+$/);
+    const extension = extensionMatch ? extensionMatch[0].toLowerCase() : '';
+
+    const name = `${repairId}_${stage}_${i + 1}${extension}`;
+    const link = await uploadPhoto(photo, name);
+
     links.push(link);
   }
+
   return links;
 }
 
@@ -190,8 +198,17 @@ export default async request => {
   // Nine random bytes produce 12 URL-safe characters (72 bits of randomness).
   const repairId = randomBytes(8).toString('base64url');
 
-  const beforeLinks = await uploadPhotos(form.getAll('beforePhotos'));
-  const afterLinks = await uploadPhotos(form.getAll('afterPhotos'));
+  const beforeLinks = await uploadPhotos(
+    form.getAll('beforePhotos'),
+    repairId,
+    'before'
+  );
+
+  const afterLinks = await uploadPhotos(
+    form.getAll('afterPhotos'),
+    repairId,
+    'after'
+  );
 
 
   const row = [
