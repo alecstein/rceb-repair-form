@@ -111,8 +111,8 @@ async function saveRepair(row, beforeLinks, afterLinks, repairId) {
   const cells = row.map(value => ({
     userEnteredValue: { stringValue: String(value ?? '') }
   }));
-  cells[17] = photoLinkCell(beforeLinks, repairId, 'before'); // Column R
-  cells[18] = photoLinkCell(afterLinks, repairId, 'after'); // Column S
+  cells[16] = photoLinkCell(beforeLinks, repairId, 'before'); // Column Q
+  cells[17] = photoLinkCell(afterLinks, repairId, 'after'); // Column R
 
   // append the values and their links together in one write.
   await googleRequest(baseUrl + ':batchUpdate', {
@@ -133,7 +133,7 @@ export default async request => {
   const form = await request.formData();
   // Generate once so the row and every photo label share the same repair ID.
   // Nine random bytes produce 12 URL-safe characters (72 bits of randomness).
-  const repairId = randomBytes(9).toString('base64url');
+  const repairId = randomBytes(8).toString('base64url');
 
   const beforeLinks = await uploadPhotos(form.getAll('beforePhotos'));
   const afterLinks = await uploadPhotos(form.getAll('afterPhotos'));
