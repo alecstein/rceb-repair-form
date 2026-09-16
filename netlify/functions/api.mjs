@@ -121,10 +121,10 @@ function dateCell(date) {
       second: '2-digit',
       hourCycle: 'h23'
     })
-      .formatToParts(date)
-      .filter(part => part.type !== 'literal')
-      .map(part => [part.type, part.value])
-  );
+    .formatToParts(date)
+    .filter(part => part.type !== 'literal')
+    .map(part => [part.type, part.value])
+    );
 
   const localMilliseconds = Date.UTC(
     Number(parts.year),
@@ -134,10 +134,10 @@ function dateCell(date) {
     Number(parts.minute),
     Number(parts.second),
     date.getUTCMilliseconds()
-  );
+    );
 
   const sheetsSerial =
-    localMilliseconds / (24 * 60 * 60 * 1000) + 25569;
+  localMilliseconds / (24 * 60 * 60 * 1000) + 25569;
 
   return {
     userEnteredValue: { numberValue: sheetsSerial },
@@ -150,18 +150,62 @@ function dateCell(date) {
   };
 }
 
+async function productCategory(product) {
+  const response = await fetch('https://api.typesafe.ai/v1/systemone', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.TYPESAFE_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      state: product,
+      model: 'jev-latest',
+      questions: {
+        category: {
+          type: 'choice',
+          instructions: 'This object best fits which category?',
+          criteria: {
+            'Bicycles': 'Bicycles',
+            'Clocks / alarm clocks': 'Clocks / alarm clocks',
+            'Computer equipment / phones': 'Computer equipment / phones',
+            'Display and sound equipment': 'Display and sound equipment',
+            'Furniture': 'Furniture',
+            'Household appliances electric': 'Household appliances electric',
+            'Household appliances non-electric': 'Household appliances non-electric',
+            'Jewelry': 'Jewelry',
+            'Other': 'Other',
+            'Textile': 'Textile',
+            'Tools electric': 'Tools electric',
+            'Tools non-electric': 'Tools non-electric',
+            'Toys electric': 'Toys electric',
+            'Toys non-electric': 'Toys non-electric'
+          }
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`TypeSafe failed: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  return result.answers.category.choice;
+}
+
 async function saveRepair(row, beforeLinks, afterLinks) {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
   const baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' +
-    encodeURIComponent(spreadsheetId);
+  encodeURIComponent(spreadsheetId);
 
   // rich text requests use the tab's numeric ID rather than its name.
   const spreadsheet = await googleRequest(
     baseUrl + '?fields=sheets(properties(sheetId,title))'
-  );
+    );
   const sheet = spreadsheet.sheets.find(
     sheet => sheet.properties.title === process.env.GOOGLE_SHEET_NAME
-  );
+    );
   if (!sheet) throw new Error('Configured Google Sheet tab was not found.');
 
   const cells = row.map(value => {
@@ -174,8 +218,10 @@ async function saveRepair(row, beforeLinks, afterLinks) {
     };
   });
 
-cells[16] = photoLinkCell(beforeLinks); // column q
-cells[17] = photoLinkCell(afterLinks); // column r
+  for (let i = 0; i < 4; i++) {
+    cells[16 + i] = photoLinkCell(beforeLinks.slice(i, i + 1));
+    cells[20 + i] = photoLinkCell(afterLinks.slice(i, i + 1));
+  }
 
   // append the values and their links together in one write.
   await googleRequest(baseUrl + ':batchUpdate', {
@@ -190,10 +236,14 @@ cells[17] = photoLinkCell(afterLinks); // column r
       }]
     }
   });
+
 }
 
 export default async request => {
   const form = await request.formData();
+  if (form.getAll('beforePhotos').length > 4 || form.getAll('afterPhotos').length > 4) {
+    return Response.json({ error: 'Choose at most 4 photos before and 4 photos after.' }, { status: 400 });
+  }
   // Generate once so the row and every photo label share the same repair ID.
   // Nine random bytes produce 12 URL-safe characters (72 bits of randomness).
   const repairId = randomBytes(8).toString('base64url');
@@ -202,15 +252,22 @@ export default async request => {
     form.getAll('beforePhotos'),
     repairId,
     'before'
-  );
+    );
 
   const afterLinks = await uploadPhotos(
     form.getAll('afterPhotos'),
     repairId,
     'after'
-  );
+    );
 
+  let category = 'Other';
 
+  try {
+    category = await classifyProduct(productType);
+  } catch (error) {
+    console.error('Could not classify product:', error);
+  }
+  
   const row = [
     repairId,
     new Date(),
@@ -218,7 +275,7 @@ export default async request => {
     form.get('guest-name'),
     form.get('product-type'),
     form.get('product-status'),
-    form.get('category'),
+    category,
     form.get('brand-name'),
     form.get('brand-status'),
     form.get('modelInfo'),
@@ -227,9 +284,7 @@ export default async request => {
     form.get('experience'),
     form.get('problemSolution'),
     form.get('guestReflection'),
-    form.get('purchaseRequests'),
-    beforeLinks.join('\n'),
-    afterLinks.join('\n')
+    form.get('purchaseRequests')
   ];
 
   await saveRepair(row, beforeLinks, afterLinks);

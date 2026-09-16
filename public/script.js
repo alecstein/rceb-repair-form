@@ -91,13 +91,13 @@ async function getProductTypes() {
 	return await response.json();
 }
 
-async function getCategories() {
-	const response = await fetch('/data/categories.json');
-	if (!response.ok) {
-		throw new Error("Couldn't load categories.json")
-	}
-	return await response.json();
-}
+// async function getCategories() {
+// 	const response = await fetch('/data/categories.json');
+// 	if (!response.ok) {
+// 		throw new Error("Couldn't load categories.json")
+// 	}
+// 	return await response.json();
+// }
 
 async function getBrandNames() {
 	const response = await fetch('/data/brands.json');
@@ -107,17 +107,17 @@ async function getBrandNames() {
 	return await response.json();
 }
 
-async function setCategories() {
-	const categories = await getCategories();
-	const select = byId('category');
+// async function setCategories() {
+// 	const categories = await getCategories();
+// 	const select = byId('category');
 
-	for (const category of categories) {
-		const option = document.createElement('option');
-		option.value = category;
-		option.textContent = category;
-		select.appendChild(option);
-	}
-}
+// 	for (const category of categories) {
+// 		const option = document.createElement('option');
+// 		option.value = category;
+// 		option.textContent = category;
+// 		select.appendChild(option);
+// 	}
+// }
 
 function showSuggestedOptions(input, suggestions, myList) {
 	const value = input.value.toLocaleLowerCase().trim();
@@ -413,5 +413,5 @@ form.addEventListener('submit', async event => {
 });
 
 checkValidEmail('new-volunteer-email')
-setCategories();
+// setCategories();
 setSuggestedOptions();
