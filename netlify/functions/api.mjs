@@ -263,7 +263,7 @@ export default async request => {
   let category = 'Other';
 
   try {
-    category = await productCategory(productType);
+    category = await productCategory(form.get('product-type'));
   } catch (error) {
     console.error('Could not classify product:', error);
   }
