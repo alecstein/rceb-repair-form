@@ -82,7 +82,7 @@ function photoLinkCell(links) {
   links.forEach((uri, index) => {
     if (index > 0) {
       textFormatRuns.push({ startIndex: text.length, format: {} });
-      text += '\n';
+      text += ' ';
     }
 
     textFormatRuns.push({
