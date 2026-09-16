@@ -67,13 +67,12 @@ async function uploadPhotos(photos) {
   return links;
 }
 
-function photoLinkCell(links, repairId, stage) {
+function photoLinkCell(links) {
   let text = '';
   const textFormatRuns = [];
 
   links.forEach((uri, index) => {
     if (index > 0) {
-      // Stop the previous link before the newline.
       textFormatRuns.push({ startIndex: text.length, format: {} });
       text += '\n';
     }
@@ -86,7 +85,8 @@ function photoLinkCell(links, repairId, stage) {
         foregroundColorStyle: { rgbColor: { red: 0.1, green: 0.3, blue: 0.8 } }
       }
     });
-    text += `${repairId}_${stage}_${index + 1}`;
+
+    text += 'photo';
   });
 
   return {
@@ -142,7 +142,7 @@ function dateCell(date) {
   };
 }
 
-async function saveRepair(row, beforeLinks, afterLinks, repairId) {
+async function saveRepair(row, beforeLinks, afterLinks) {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
   const baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' +
     encodeURIComponent(spreadsheetId);
@@ -166,8 +166,8 @@ async function saveRepair(row, beforeLinks, afterLinks, repairId) {
     };
   });
 
-  cells[16] = photoLinkCell(beforeLinks, repairId, 'before'); // Column Q
-  cells[17] = photoLinkCell(afterLinks, repairId, 'after'); // Column R
+cells[16] = photoLinkCell(beforeLinks); // column q
+cells[17] = photoLinkCell(afterLinks); // column r
 
   // append the values and their links together in one write.
   await googleRequest(baseUrl + ':batchUpdate', {
@@ -215,6 +215,6 @@ export default async request => {
     afterLinks.join('\n')
   ];
 
-  await saveRepair(row, beforeLinks, afterLinks, repairId);
+  await saveRepair(row, beforeLinks, afterLinks);
   return Response.json({ ok: true, repairId });
 };
