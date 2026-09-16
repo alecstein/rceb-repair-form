@@ -156,7 +156,6 @@ export default async request => {
     form.get('problemSolution'),
     form.get('guestReflection'),
     form.get('purchaseRequests'),
-    '', 
     beforeLinks.join('\n'),
     afterLinks.join('\n')
   ];
