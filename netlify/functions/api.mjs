@@ -5,6 +5,8 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { googleRequest } from '../lib/google.mjs';
 
+const TIME_ZONE = 'America/New_York';
+
 async function uploadPhoto(photo) {
   const folderId = process.env.GOOGLE_PHOTO_FOLDER_ID;
   const boundary = 'photo_' + randomUUID();
@@ -94,6 +96,52 @@ function photoLinkCell(links, repairId, stage) {
   };
 }
 
+function dateCell(date) {
+  // Sheets stores datetimes as days since 1899-12-30, with the
+  // fractional part representing the time of day.
+  //
+  // Convert the instant to New York wall-clock time first so the
+  // displayed value is the local Repair Cafe time, including DST.
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    })
+      .formatToParts(date)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  );
+
+  const localMilliseconds = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+    date.getUTCMilliseconds()
+  );
+
+  const sheetsSerial =
+    localMilliseconds / (24 * 60 * 60 * 1000) + 25569;
+
+  return {
+    userEnteredValue: { numberValue: sheetsSerial },
+    userEnteredFormat: {
+      numberFormat: {
+        type: 'DATE_TIME',
+        pattern: 'mmm d, yyyy h:mm:ss.000 AM/PM'
+      }
+    }
+  };
+}
+
 async function saveRepair(row, beforeLinks, afterLinks, repairId) {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
   const baseUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' +
@@ -108,9 +156,16 @@ async function saveRepair(row, beforeLinks, afterLinks, repairId) {
   );
   if (!sheet) throw new Error('Configured Google Sheet tab was not found.');
 
-  const cells = row.map(value => ({
-    userEnteredValue: { stringValue: String(value ?? '') }
-  }));
+  const cells = row.map(value => {
+    if (value instanceof Date) {
+      return dateCell(value);
+    }
+
+    return {
+      userEnteredValue: { stringValue: String(value ?? '') }
+    };
+  });
+
   cells[16] = photoLinkCell(beforeLinks, repairId, 'before'); // Column Q
   cells[17] = photoLinkCell(afterLinks, repairId, 'after'); // Column R
 
@@ -122,7 +177,7 @@ async function saveRepair(row, beforeLinks, afterLinks, repairId) {
         appendCells: {
           sheetId: sheet.properties.sheetId,
           rows: [{ values: cells }],
-          fields: 'userEnteredValue,textFormatRuns,userEnteredFormat.wrapStrategy'
+          fields: 'userEnteredValue,textFormatRuns,userEnteredFormat'
         }
       }]
     }
@@ -141,7 +196,7 @@ export default async request => {
 
   const row = [
     repairId,
-    new Date().toISOString(),
+    new Date(),
     form.get('volunteer-name'),
     form.get('guest-name'),
     form.get('product-type'),
