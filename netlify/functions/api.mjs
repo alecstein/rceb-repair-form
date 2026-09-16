@@ -150,7 +150,7 @@ function dateCell(date) {
   };
 }
 
-async function productCategory(product) {
+async function getProductCategory(product, brandName) {
   const response = await fetch('https://api.typesafe.ai/v1/systemone', {
     method: 'POST',
     headers: {
@@ -158,7 +158,7 @@ async function productCategory(product) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      state: product,
+      state: `Object: ${product}\nBrand: ${brandName || 'Not given'}`,
       model: 'jev-latest',
       questions: {
         category: {
@@ -263,7 +263,7 @@ export default async request => {
   let category = 'Other';
 
   try {
-    category = await productCategory(form.get('product-type'));
+    category = await getProductCategory(form.get('product-type'), form.get('brand-name'));
   } catch (error) {
     console.error('Could not classify product:', error);
   }
