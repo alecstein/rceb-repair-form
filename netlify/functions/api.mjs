@@ -263,11 +263,11 @@ export default async request => {
   let category = 'Other';
 
   try {
-    category = await classifyProduct(productType);
+    category = await productCategory(productType);
   } catch (error) {
     console.error('Could not classify product:', error);
   }
-  
+
   const row = [
     repairId,
     new Date(),
