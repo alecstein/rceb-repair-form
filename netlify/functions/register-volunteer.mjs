@@ -50,9 +50,9 @@ export default async request => {
 
     const volunteerRecord = {
       timestamp: new Date().toISOString(),
-      'first name': firstName,
-      'last name': lastName,
-      'full name': name,
+      'First Name': firstName,
+      'Last Name': lastName,
+      'Full Name': name,
       email
     };
 
