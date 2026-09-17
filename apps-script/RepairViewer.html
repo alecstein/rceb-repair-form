@@ -1,0 +1,294 @@
+<!-- written by an LLM -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      margin: 0;
+      padding: 10px;
+      color: #222;
+    }
+
+    .nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    button {
+      padding: 4px 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 3px 0;
+    }
+
+    .muted {
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 14px;
+      margin-bottom: 4px;
+    }
+
+    .text {
+      white-space: pre-wrap;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin-bottom: 6px;
+      box-sizing: border-box;
+    }
+
+    .error {
+      background: #fee;
+      color: #900;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="nav">
+    <button onclick="move(-1)">‹</button>
+
+    <button onclick="loadSelected()">
+      Selected row
+    </button>
+
+    <button onclick="move(1)">›</button>
+
+    <span id="row"></span>
+  </div>
+
+  <h2 id="guest"></h2>
+
+  <div class="muted" id="basic"></div>
+  <div class="muted" id="item"></div>
+
+  <div class="label">Guest experience</div>
+  <div class="text" id="experience"></div>
+
+  <div class="label">Problem / solution</div>
+  <div class="text" id="problem"></div>
+
+  <div class="label">Guest notes</div>
+  <div class="text" id="notes"></div>
+
+  <div class="label">Before</div>
+  <div id="before"></div>
+
+  <div class="label">After</div>
+  <div id="after"></div>
+
+
+  <script>
+    let currentRow = null;
+
+
+    function showError(error) {
+      const message =
+        error && error.message
+          ? error.message
+          : String(error);
+
+      const oldError =
+        document.querySelector('.error');
+
+      if (oldError) {
+        oldError.remove();
+      }
+
+      const div =
+        document.createElement('div');
+
+      div.className = 'error';
+      div.textContent = message;
+
+      document.body.prepend(div);
+
+      console.error(error);
+    }
+
+
+    function loadSelected() {
+      google.script.run
+        .withSuccessHandler(render)
+        .withFailureHandler(showError)
+        .getCurrentReview();
+    }
+
+
+    function move(direction) {
+      if (currentRow === null) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(render)
+        .withFailureHandler(showError)
+        .getReviewRow(currentRow + direction);
+    }
+
+
+    function render(data) {
+      currentRow = data.row;
+
+      const oldError =
+        document.querySelector('.error');
+
+      if (oldError) {
+        oldError.remove();
+      }
+
+      document.getElementById('row').textContent =
+        'Row ' + data.row;
+
+      document.getElementById('guest').textContent =
+        data.guest || 'No guest name';
+
+      document.getElementById('basic').textContent =
+        [
+          data.date,
+          data.volunteer
+        ]
+          .filter(Boolean)
+          .join(' · ');
+
+      document.getElementById('item').textContent =
+        [
+          data.category,
+          data.product,
+          data.brand,
+          data.model,
+          data.outcome
+        ]
+          .filter(Boolean)
+          .join(' · ');
+
+      document.getElementById('experience').textContent =
+        data.experience || '—';
+
+      document.getElementById('problem').textContent =
+        data.problem || '—';
+
+      document.getElementById('notes').textContent =
+        data.notes || '—';
+
+      renderPhotos(
+        data.before || [],
+        data.after || []
+      );
+    }
+
+
+    function renderPhotos(beforeIds, afterIds) {
+      const before =
+        document.getElementById('before');
+
+      const after =
+        document.getElementById('after');
+
+      before.innerHTML = '';
+      after.innerHTML = '';
+
+      if (!beforeIds.length) {
+        before.textContent = '—';
+      }
+
+      if (!afterIds.length) {
+        after.textContent = '—';
+      }
+
+      const allIds = [
+        ...beforeIds,
+        ...afterIds
+      ];
+
+      if (!allIds.length) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(images => {
+          const imageMap = {};
+
+          images.forEach(image => {
+            imageMap[image.fileId] = image;
+          });
+
+          addImages(
+            before,
+            beforeIds,
+            imageMap
+          );
+
+          addImages(
+            after,
+            afterIds,
+            imageMap
+          );
+        })
+        .withFailureHandler(showError)
+        .getDriveImages(allIds);
+    }
+
+
+    function addImages(
+      container,
+      fileIds,
+      imageMap
+    ) {
+      container.innerHTML = '';
+
+      if (!fileIds.length) {
+        container.textContent = '—';
+        return;
+      }
+
+      fileIds.forEach(fileId => {
+        const result =
+          imageMap[fileId];
+
+        if (!result || !result.src) {
+          const error =
+            document.createElement('div');
+
+          error.textContent =
+            'Could not load photo';
+
+          container.appendChild(error);
+
+          return;
+        }
+
+        const img =
+          document.createElement('img');
+
+        img.src = result.src;
+
+        container.appendChild(img);
+      });
+    }
+
+
+    loadSelected();
+  </script>
+
+</body>
+</html>
