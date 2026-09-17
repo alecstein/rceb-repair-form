@@ -7,11 +7,11 @@ import {
 } from '../lib/google-sheets.mjs';
 
 const VOLUNTEER_HEADERS = [
-  'timestamp',
-  'first name',
-  'last name',
-  'full name',
-  'email'
+  'Date',
+  'First Name',
+  'Last Name',
+  'Full Name',
+  'Email'
 ];
 
 export default async request => {
