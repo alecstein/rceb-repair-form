@@ -4,13 +4,15 @@ import {
   requireHeaders
 } from '../lib/google-sheets.mjs';
 
-const VOLUNTEER_HEADERS = [
-  'Date',
-  'First Name',
-  'Last Name',
-  'Full Name',
-  'Email'
-];
+const VOLUNTEER_COLUMNS = {
+  date: 'Date',
+  firstName: 'First Name',
+  lastName: 'Last Name',
+  fullName: 'Full Name',
+  email: 'Email'
+};
+
+const VOLUNTEER_HEADERS = Object.values(VOLUNTEER_COLUMNS);
 
 export default async request => {
   if (request.method !== 'POST') {
@@ -31,7 +33,7 @@ export default async request => {
     return Response.json(
       { error: 'Enter first name, last name, and a valid email' },
       { status: 400 }
-    );
+      );
   }
 
   try {
@@ -47,11 +49,11 @@ export default async request => {
     requireHeaders(headers, VOLUNTEER_HEADERS, sheetName);
 
     const volunteerRecord = {
-      VOLUNTEER_HEADERS[0]: new Date().toISOString(),
-      VOLUNTEER_HEADERS[1]: firstName,
-      VOLUNTEER_HEADERS[2]: lastName,
-      VOLUNTEER_HEADERS[3]: name,
-      VOLUNTEER_HEADERS[4]: email
+      [VOLUNTEER_COLUMNS.date]: new Date().toISOString(),
+      [VOLUNTEER_COLUMNS.firstName]: firstName,
+      [VOLUNTEER_COLUMNS.lastName]: lastName,
+      [VOLUNTEER_COLUMNS.fullName]: name,
+      [VOLUNTEER_COLUMNS.email]: email
     };
 
     const values = headers.map(header => volunteerRecord[header] ?? '');
@@ -65,6 +67,6 @@ export default async request => {
     return Response.json(
       { error: 'Could not confirm registration. Check the sheet before retrying.' },
       { status: 500 }
-    );
+      );
   }
 };
