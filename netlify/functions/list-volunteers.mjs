@@ -6,7 +6,7 @@ import {
   requireHeaders
 } from '../lib/google-sheets.mjs';
 
-const FULL_NAME_HEADER = 'full name';
+const FULL_NAME_HEADER = 'Full Name';
 
 async function getVolunteersList() {
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
