@@ -319,5 +319,6 @@ function prWrite_(sheet, rows, table, schema) {
   sheet.getRange(2, boughtColumn, rows.length, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireCheckbox().build()
   );
-  sheet.getRange(2, dateColumn, rows.length, 1).setNumberFormat('m/d/yyyy');
+  sheet.getRange(2, dateColumn, rows.length, 1)
+    .setNumberFormat('mmm d, yyyy h:mm:ss.000 AM/PM');
 }

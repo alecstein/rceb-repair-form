@@ -102,8 +102,7 @@ const CATEGORIES = {
 };
 
 const OUTCOMES = {
-  'Success': 'yes',             // legacy records
-  'Successful repair': 'yes',  // current form
+  'Success': 'yes',
   'Some improvement': 'half',
   'Advice given': 'half',
   "Couldn't help": 'no'
@@ -269,10 +268,13 @@ function loadSourceRepairs(sheet) {
 
     seen.add(id);
 
+    const dateTime = sourceRepairDateTime(row[columns.date]);
+
     repairs.push({
       id,
       sourceRow: i + 1,
-      date: sourceRepairDate(row[columns.date]),
+      date: sourceRepairDate(dateTime),
+      dateTime,
       repairer: cellText(row[columns.repairer]),
       productName: cellText(row[columns.productName]),
       brandName: cellText(row[columns.brandName]),
@@ -353,10 +355,12 @@ function loadRepairLinkState(sheet) {
 function createRepairLinkEntry(sheet, columns, repair, reference) {
   const row = sheet.getLastRow() + 1;
 
-  sheet.getRange(row, columns.date + 1).setNumberFormat('@');
+  sheet.getRange(row, columns.date + 1)
+    .setNumberFormat('mmm d, yyyy h:mm:ss.000 AM/PM');
 
   sheet.getRange(row, columns.repairId + 1).setValue(repair.id);
-  sheet.getRange(row, columns.date + 1).setValue(repair.date);
+  sheet.getRange(row, columns.date + 1)
+    .setValue(repair.dateTime);
   sheet.getRange(row, columns.reference + 1).setValue(reference);
   sheet.getRange(row, columns.link + 1).setValue('');
 
@@ -369,15 +373,17 @@ function createRepairLinkEntry(sheet, columns, repair, reference) {
 }
 
 
-function updatePendingRepairEntry(sheet, columns, entry, date, reference) {
+function updatePendingRepairEntry(sheet, columns, entry, repair, reference) {
   // If a previous pending attempt is no longer present on RepairMonitor,
   // the new attempt should use the CURRENT RawData date as well as a fresh
   // reference.
-  sheet.getRange(entry.row, columns.date + 1).setNumberFormat('@');
-  sheet.getRange(entry.row, columns.date + 1).setValue(date);
+  sheet.getRange(entry.row, columns.date + 1)
+    .setNumberFormat('mmm d, yyyy h:mm:ss.000 AM/PM');
+  sheet.getRange(entry.row, columns.date + 1)
+    .setValue(repair.dateTime);
   sheet.getRange(entry.row, columns.reference + 1).setValue(reference);
 
-  entry.date = date;
+  entry.date = repair.date;
   entry.reference = reference;
 }
 
@@ -389,82 +395,26 @@ function saveRepairLink(sheet, columns, entry, link) {
 
 
 function repairMonitorDate(value) {
-  if (value instanceof Date) {
-    if (isNaN(value.getTime())) {
-      throw new Error('Invalid repair date in linking table.');
-    }
-
-    return Utilities.formatDate(
-      value,
-      RM_CONFIG.timeZone,
-      'yyyy-MM-dd'
-    );
+  if (!(value instanceof Date) || isNaN(value.getTime())) {
+    throw new Error('Repair date must be a real date in the linking table.');
   }
 
-  if (typeof value !== 'string') {
-    throw new Error(
-      'Expected a YYYY-MM-DD repair date in the linking table.'
-    );
-  }
-
-  return validateYmd(value.trim(), 'repair date');
+  return Utilities.formatDate(value, RM_CONFIG.timeZone, 'yyyy-MM-dd');
 }
 
 
 function sourceRepairDate(value) {
-  if (value instanceof Date) {
-    if (isNaN(value.getTime())) {
-      throw new Error('Invalid repair date.');
-    }
-
-    return Utilities.formatDate(
-      value,
-      RM_CONFIG.timeZone,
-      'yyyy-MM-dd'
-    );
-  }
-
-  if (typeof value !== 'string') {
-    throw new Error('Expected a repair date.');
-  }
-
-  const text = value.trim();
-
-  // Important: JavaScript parses "YYYY-MM-DD" as UTC midnight. In New York
-  // that can become the PREVIOUS calendar date. Validate and return it as a
-  // calendar date instead of feeding it to new Date().
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    return validateYmd(text, 'repair date');
-  }
-
-  const parsed = new Date(text);
-
-  if (isNaN(parsed.getTime())) {
-    throw new Error('Invalid repair date: ' + value);
-  }
-
   return Utilities.formatDate(
-    parsed,
+    sourceRepairDateTime(value),
     RM_CONFIG.timeZone,
     'yyyy-MM-dd'
   );
 }
 
 
-function validateYmd(value, label) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error('Expected a YYYY-MM-DD ' + label + ': ' + value);
-  }
-
-  const [year, month, day] = value.split('-').map(Number);
-  const check = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    check.getUTCFullYear() !== year ||
-    check.getUTCMonth() !== month - 1 ||
-    check.getUTCDate() !== day
-  ) {
-    throw new Error('Invalid ' + label + ': ' + value);
+function sourceRepairDateTime(value) {
+  if (!(value instanceof Date) || isNaN(value.getTime())) {
+    throw new Error('Repair date must be a real date in RawData.');
   }
 
   return value;
@@ -1078,7 +1028,7 @@ function syncRepair(repair, linkSheet, state) {
       linkSheet,
       state.columns,
       entry,
-      repair.date,
+      repair,
       reference
     );
 

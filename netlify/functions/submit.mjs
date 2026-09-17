@@ -39,15 +39,15 @@ export default async request => {
     'Volunteer name': form.get('volunteer-name'),
     'Guest name': form.get('guest-name'),
     'Product name': form.get('product'),
-    Brand: form.get('brand-name'),
-    'Model / serial': form.get('modelInfo'),
+    Brand: form.get('brand-name') ?? '',
+    'Model / serial': form.get('modelInfo') ?? '',
     'RM Category [auto-generated]': category,
     Condition: form.get('condition'),
     Outcome: form.get('outcome'),
     'Guest experience': form.get('experience'),
     'Problem / solution description': form.get('problem-solution'),
-    'Guest notes': form.get('guest-reflection'),
-    'Purchase requests': form.get('purchase-requests')
+    'Guest notes': form.get('guest-reflection') ?? '',
+    'Purchase requests': form.get('purchase-requests') ?? ''
   };
 
   await saveRepair(repairRecord, beforeLinks, afterLinks);

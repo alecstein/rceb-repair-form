@@ -1,7 +1,8 @@
 import {
-  appendSheetRow,
+  appendSheetCells,
   getSheetHeaders,
-  requireHeaders
+  requireHeaders,
+  sheetCell
 } from '../lib/google-sheets.mjs';
 
 const VOLUNTEER_COLUMNS = {
@@ -49,16 +50,29 @@ export default async request => {
     requireHeaders(headers, VOLUNTEER_HEADERS, sheetName);
 
     const volunteerRecord = {
-      [VOLUNTEER_COLUMNS.date]: new Date().toISOString(),
+      [VOLUNTEER_COLUMNS.date]: new Date(),
       [VOLUNTEER_COLUMNS.firstName]: firstName,
       [VOLUNTEER_COLUMNS.lastName]: lastName,
       [VOLUNTEER_COLUMNS.fullName]: name,
       [VOLUNTEER_COLUMNS.email]: email
     };
 
-    const values = headers.map(header => volunteerRecord[header] ?? '');
+    const cells = headers.map(header => {
+      if (
+        !Object.hasOwn(volunteerRecord, header) ||
+        volunteerRecord[header] == null
+      ) {
+        throw new Error(
+          'No value configured for volunteer sheet header "' +
+          header +
+          '".'
+        );
+      }
 
-    await appendSheetRow(spreadsheetId, sheetName, values);
+      return sheetCell(volunteerRecord[header]);
+    });
+
+    await appendSheetCells(spreadsheetId, sheetName, cells);
 
     return Response.json({ name });
   } catch (error) {

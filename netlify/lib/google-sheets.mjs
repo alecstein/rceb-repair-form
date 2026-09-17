@@ -1,8 +1,65 @@
 import { googleRequest } from './google-request.mjs';
 
+const DEFAULT_TIME_ZONE = 'America/New_York';
+
 export function spreadsheetBaseUrl(spreadsheetId) {
   return 'https://sheets.googleapis.com/v4/spreadsheets/' +
     encodeURIComponent(spreadsheetId);
+}
+
+export function dateCell(date, timeZone = DEFAULT_TIME_ZONE) {
+  // Sheets stores datetimes as days since 1899-12-30, with the
+  // fractional part representing the time of day.
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    })
+      .formatToParts(date)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  );
+
+  const localMilliseconds = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+    date.getUTCMilliseconds()
+  );
+
+  const sheetsSerial =
+    localMilliseconds / (24 * 60 * 60 * 1000) + 25569;
+
+  return {
+    userEnteredValue: { numberValue: sheetsSerial },
+    userEnteredFormat: {
+      numberFormat: {
+        type: 'DATE_TIME',
+        pattern: 'mmm d, yyyy h:mm:ss.000 AM/PM'
+      }
+    }
+  };
+}
+
+export function sheetCell(value) {
+  if (value instanceof Date) {
+    return dateCell(value);
+  }
+
+  return {
+    userEnteredValue: {
+      stringValue: String(value ?? '')
+    }
+  };
 }
 
 export function sheetRange(sheetName, a1Range) {
@@ -83,16 +140,19 @@ export async function getSheetInfo(spreadsheetId, sheetName) {
   };
 }
 
-export async function appendSheetRow(spreadsheetId, sheetName, values) {
-  const url = spreadsheetBaseUrl(spreadsheetId) +
-    '/values/' +
-    encodeURIComponent(sheetRange(sheetName)) +
-    ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS';
+export async function appendSheetCells(spreadsheetId, sheetName, cells) {
+  const sheet = await getSheetInfo(spreadsheetId, sheetName);
 
-  await googleRequest(url, {
+  await googleRequest(sheet.baseUrl + ':batchUpdate', {
     method: 'POST',
     data: {
-      values: [values]
+      requests: [{
+        appendCells: {
+          sheetId: sheet.sheetId,
+          rows: [{ values: cells }],
+          fields: 'userEnteredValue,userEnteredFormat'
+        }
+      }]
     }
   });
 }
