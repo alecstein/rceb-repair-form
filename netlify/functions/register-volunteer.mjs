@@ -49,11 +49,11 @@ export default async request => {
     requireHeaders(headers, VOLUNTEER_HEADERS, sheetName);
 
     const volunteerRecord = {
-      timestamp: new Date().toISOString(),
+      'Date': new Date().toISOString(),
       'First Name': firstName,
       'Last Name': lastName,
       'Full Name': name,
-      email
+      'Email': email
     };
 
     const values = headers.map(header => volunteerRecord[header] ?? '');
