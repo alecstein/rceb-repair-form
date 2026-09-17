@@ -1,5 +1,3 @@
-// Gets volunteer names from the registered volunteers list.
-
 import {
   getSheetHeaders,
   getSheetValues,

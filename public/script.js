@@ -31,6 +31,18 @@ function toggleLoading(bool) {
 	form.inert = bool;
 }
 
+function toggleCameraButtons(disabled) {
+	const buttons = [
+		byId("camera-before-button"),
+		byId("camera-after-button"),
+		byId("camera-before-non-ios-button"),
+		byId("camera-after-non-ios-button"),
+	];
+	for (const button of buttons) {
+		button.disabled = disabled;
+	}
+}
+
 function toggleRequired(elementId, bool) {
 	byId(elementId).required = bool;
 }
@@ -245,7 +257,7 @@ async function addPhotos(input, photoList, thumbnailsId) {
 	const files = Array.from(input.files);
 	input.value = '';
 
-	toggleLoading(true);
+	toggleCameraButtons(true);
 	try {
 		for (const source of files) {
 			if (photoList.length >= MAX_PHOTOS) break;
@@ -256,7 +268,7 @@ async function addPhotos(input, photoList, thumbnailsId) {
 			}
 		}
 	} finally {
-		toggleLoading(false);
+		toggleCameraButtons(false);
 		checkDisableAddPhoto();
 	}
 }

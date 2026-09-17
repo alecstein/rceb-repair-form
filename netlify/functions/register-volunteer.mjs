@@ -1,5 +1,3 @@
-// Registers a volunteer and refreshes the volunteer list.
-
 import {
   appendSheetRow,
   getSheetHeaders,
@@ -49,11 +47,11 @@ export default async request => {
     requireHeaders(headers, VOLUNTEER_HEADERS, sheetName);
 
     const volunteerRecord = {
-      'Date': new Date().toISOString(),
-      'First Name': firstName,
-      'Last Name': lastName,
-      'Full Name': name,
-      'Email': email
+      VOLUNTEER_HEADERS[0]: new Date().toISOString(),
+      VOLUNTEER_HEADERS[1]: firstName,
+      VOLUNTEER_HEADERS[2]: lastName,
+      VOLUNTEER_HEADERS[3]: name,
+      VOLUNTEER_HEADERS[4]: email
     };
 
     const values = headers.map(header => volunteerRecord[header] ?? '');
