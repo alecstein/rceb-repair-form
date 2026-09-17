@@ -1,11 +1,17 @@
-// Fixed per-photo budget: six photos use at most 3.9 MB before multipart overhead.
+// written by an LLM
+// Netlify has a limit of 4.5MB for uploads
+// that means the total form size needs to be less than
+// 4.5MB. 
+// this shrinks the photos intelligently--first by reducing
+// the jpeg quality and only then decreasing the resolution
+// (you get huge space savings from reducing the quality ~20%)
+
 export const PHOTO_OPTIONS = Object.freeze({
 	maxBytes: 650_000,
 	maxDimension: 2400,
 	qualities: Object.freeze([0.85, 0.80, 0.75]),
 });
 
-/** Return one upload-ready File. No form state, thumbnails, or alerts belong here. */
 export async function optimizePhoto(file, options = PHOTO_OPTIONS) {
 	const { maxBytes, maxDimension, qualities } = { ...PHOTO_OPTIONS, ...options };
 	if (!(file instanceof File)) throw new TypeError('Choose a photo file.');

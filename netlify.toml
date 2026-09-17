@@ -3,6 +3,16 @@
   functions = "netlify/functions"
 
 [[redirects]]
-  from = "/api"
-  to = "/.netlify/functions/api"
+  from = "/submit"
+  to = "/.netlify/functions/submit"
+  status = 200
+
+[[redirects]]
+  from = "/list-volunteers"
+  to = "/.netlify/functions/list-volunteers"
+  status = 200
+
+[[redirects]]
+  from = "/register-volunteer"
+  to = "/.netlify/functions/register-volunteer"
   status = 200

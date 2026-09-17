@@ -39,3 +39,5 @@ We don't have unlimited space and Netlify enforces a strict size limit on upload
 
 At the menu above the app you'll see a "RepairMonitor" dropdown. You'll log in (need to go to Network tools and copy your session cookie) and then once that's done, just upload. This was not trivial to implement.
 
+The RepairMonitor website is a dumpster fire. They require a repair id. If you delete a repair and reuse that repair ID you can get an error. Also, their taxonomy stays updated even if you delete a repair. 
+

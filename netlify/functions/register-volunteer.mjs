@@ -1,14 +1,24 @@
-// written by an LLM
-// registers a volunteer and refreshes
+// Registers a volunteer and refreshes the volunteer list.
 
-import { googleRequest } from '../lib/google.mjs';
+import {
+  appendSheetRow,
+  getSheetHeaders,
+  requireHeaders
+} from '../lib/google-sheets.mjs';
 
-export default async (request) => {
+const VOLUNTEER_HEADERS = [
+  'timestamp',
+  'first name',
+  'last name',
+  'full name',
+  'email'
+];
+
+export default async request => {
   if (request.method !== 'POST') {
     return new Response('Use POST', { status: 405 });
   }
 
-  // not sure what catch is doing here
   const body = await request.json().catch(() => null);
 
   if (!body) {
@@ -19,7 +29,6 @@ export default async (request) => {
   const lastName = String(body.lastName || '').trim();
   const email = String(body.email || '').trim();
 
-  // crude namem & email validation here
   if (!firstName || !lastName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json(
       { error: 'Enter first name, last name, and a valid email' },
@@ -36,26 +45,20 @@ export default async (request) => {
     }
 
     const name = `${firstName} ${lastName}`;
-    const range = `'${sheetName.replace(/'/g, "''")}'!A:E`;
+    const headers = await getSheetHeaders(spreadsheetId, sheetName);
+    requireHeaders(headers, VOLUNTEER_HEADERS, sheetName);
 
-    const url =
-      'https://sheets.googleapis.com/v4/spreadsheets/' +
-      encodeURIComponent(spreadsheetId) +
-      '/values/' + encodeURIComponent(range) +
-      ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS';
+    const volunteerRecord = {
+      timestamp: new Date().toISOString(),
+      'first name': firstName,
+      'last name': lastName,
+      'full name': name,
+      email
+    };
 
-    await googleRequest(url, {
-      method: 'POST',
-      data: {
-        values: [[
-          new Date().toISOString(),
-          firstName,
-          lastName,
-          name,
-          email
-        ]]
-      }
-    });
+    const values = headers.map(header => volunteerRecord[header] ?? '');
+
+    await appendSheetRow(spreadsheetId, sheetName, values);
 
     return Response.json({ name });
   } catch (error) {

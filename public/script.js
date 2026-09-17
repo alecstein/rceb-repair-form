@@ -1,8 +1,5 @@
 const photoTools = import('./photos.js');
-let processingPhotos = false;
-let submitting = false;
-
-const MAX_PHOTOS = 3;
+const MAX_PHOTOS = 4;
 
 var beforePhotos = [];
 var afterPhotos = [];
@@ -29,37 +26,34 @@ function show(elementId) {
 	byId(elementId).style.display = 'block';
 }
 
-function showLoading() {
-	byId('loading-indicator').style.display = 'flex';
+function toggleLoading(bool) {
+	byId('loading-indicator').style.display = bool ? 'flex' : 'none';
+	form.inert = bool;
 }
 
-function makeRequired(elementId) {
-	byId(elementId).required = true;
+function toggleRequired(elementId, bool) {
+	byId(elementId).required = bool;
 }
 
-function makeNotRequired(elementId) {
-	byId(elementId).required = false;
-}
-
-// TODO check this
 function newVolunteer() {
 	show('new-volunteer');
 	hide('existing-volunteer');
-	makeRequired('new-volunteer-first-name');
-	makeRequired('new-volunteer-last-name');
-	makeRequired('new-volunteer-email');
-	makeNotRequired('volunteer-name')
+	toggleRequired('new-volunteer-first-name', true);
+	toggleRequired('new-volunteer-last-name', true);
+	toggleRequired('new-volunteer-email', true);
+	toggleRequired('volunteer-name', false);
 }
 
 function cancelNewVolunteer() {
 	hide('new-volunteer');
 	show('existing-volunteer');
-	makeNotRequired('new-volunteer-first-name');
-	makeNotRequired('new-volunteer-last-name');
-	makeNotRequired('new-volunteer-email');
-	makeRequired('volunteer-name')
+	toggleRequired('new-volunteer-first-name', false);
+	toggleRequired('new-volunteer-last-name', false);
+	toggleRequired('new-volunteer-email', false);
+	toggleRequired('volunteer-name', true)
 }
 
+// TODO confirm email by actually emailing
 function isValidEmail(email) {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -76,28 +70,20 @@ function checkValidEmail(inputId) {
 }
 
 async function getVolunteers () {
-	const response = await fetch('/.netlify/functions/volunteers')
+	const response = await fetch('/list-volunteers')
 	if (!response.ok) {
 		throw new Error("Couldn't get volunteers from Google sheet (check Netlify functions?)")
 	}
 	return await response.json();
 }
 
-async function getProductTypes() {
+async function getProducts() {
 	const response = await fetch('/data/products.json');
 	if (!response.ok) {
 		throw new Error("Couldn't load products.json")
 	}
 	return await response.json();
 }
-
-// async function getCategories() {
-// 	const response = await fetch('/data/categories.json');
-// 	if (!response.ok) {
-// 		throw new Error("Couldn't load categories.json")
-// 	}
-// 	return await response.json();
-// }
 
 async function getBrandNames() {
 	const response = await fetch('/data/brands.json');
@@ -107,31 +93,12 @@ async function getBrandNames() {
 	return await response.json();
 }
 
-// async function setCategories() {
-// 	const categories = await getCategories();
-// 	const select = byId('category');
-
-// 	for (const category of categories) {
-// 		const option = document.createElement('option');
-// 		option.value = category;
-// 		option.textContent = category;
-// 		select.appendChild(option);
-// 	}
-// }
-
-function showSuggestedOptions(input, suggestions, myList) {
+function showSuggestedVolunteers(input, suggestions, myList) {
 	const value = input.value.toLocaleLowerCase().trim();
-
 	suggestions.innerHTML = "";
 
-	// if the user's name exactly equals one of the 
-	// choices, don't show "add new"
-	if (
-		input.id === 'volunteer-name' &&
-		input.dataset.selectedName === input.value
-		) return;
-
-		if (value == "") return;
+	if (input.dataset.selectedName === input.value) return;
+	if (value == "") return;
 	const filtered = myList.filter(
 		q => q.toLocaleLowerCase().includes(value));
 
@@ -140,26 +107,38 @@ function showSuggestedOptions(input, suggestions, myList) {
 		li.textContent = el;
 		li.addEventListener("click", () => {
 			input.value = el;
-
-			if (input.id === 'volunteer-name') {
-				input.dataset.selectedName = el;
-				input.setCustomValidity('');
-			}
-
+			input.dataset.selectedName = el;
+			input.setCustomValidity('');
 			suggestions.innerHTML = ""
 		})
 		suggestions.appendChild(li);
 	}
 
-	// special suggestion for volunteers to add a volunteer
-	if (input.id === 'volunteer-name') {
-		const addNew = document.createElement('li');
-		addNew.textContent = '+ Add new';
-		addNew.onclick = () => {
-			newVolunteer();
-			suggestions.innerHTML = '';
-		};
-		suggestions.appendChild(addNew);
+	const addNew = document.createElement('li');
+	addNew.textContent = '+ Add new';
+	addNew.onclick = () => {
+		newVolunteer();
+		suggestions.innerHTML = '';
+	};
+	suggestions.appendChild(addNew);
+}
+
+function showSuggestedOptions(input, suggestions, myList) {
+	const value = input.value.toLocaleLowerCase().trim();
+	suggestions.innerHTML = "";
+
+	if (value == "") return;
+	const filtered = myList.filter(
+		q => q.toLocaleLowerCase().includes(value));
+
+	for (const el of filtered) {
+		const li = document.createElement("li");
+		li.textContent = el;
+		li.addEventListener("click", () => {
+			input.value = el;
+			suggestions.innerHTML = ""
+		})
+		suggestions.appendChild(li);
 	}
 }
 
@@ -171,110 +150,114 @@ function addSuggestedOptions(inputId, suggestionsId, myList) {
 	input.onfocus = () => showSuggestedOptions(input, suggestions, myList);
 }
 
-function addVolunteerSuggestedOptions(volunteerList) {
-    const input = byId('volunteer-name');
-    const suggestions = byId('volunteer-name-suggestions');
+function addSuggestedVolunteers(volunteerList) {
+	const input = byId('volunteer-name');
+	const suggestions = byId('volunteer-name-suggestions');
 
-    function clearSelection() {
-        delete input.dataset.selectedName;
-        input.setCustomValidity('Choose your name from the dropdown.');
-    }
+	function clearSelection() {
+		delete input.dataset.selectedName;
+		input.setCustomValidity('Choose your name from the dropdown.');
+	}
 
-    input.oninput = function () {
-        clearSelection();
-        showSuggestedOptions(input, suggestions, volunteerList);
-    };
+	input.oninput = function () {
+		clearSelection();
+		showSuggestedVolunteers(input, suggestions, volunteerList);
+	};
 
-    input.onfocus = () => showSuggestedOptions(input, suggestions, volunteerList);
+	input.onfocus = () => showSuggestedVolunteers(input, suggestions, volunteerList);
 
-    clearSelection();
+	clearSelection();
 }
 
 async function setSuggestedOptions() {
-    await Promise.all([
-        getVolunteers().then(list =>
-            addVolunteerSuggestedOptions(list)
-        ),
-        getProductTypes().then(list =>
-            addSuggestedOptions('product-type', 'product-type-suggestions', list)
-        ),
-        getBrandNames().then(list =>
-            addSuggestedOptions('brand-name', 'brand-name-suggestions', list)
-        )
-    ]);
+	await Promise.all([
+		getVolunteers().then(list => addSuggestedVolunteers(list)),
+		getProducts().then(list =>
+			addSuggestedOptions('product', 'product-suggestions', list)
+			),
+		getBrandNames().then(list =>
+			addSuggestedOptions('brand-name', 'brand-name-suggestions', list)
+			)
+	]);
 }
 
 // if we have too many photos we wanna stop the user
 // from adding them 
-function checkPhotoLimit() {
-	const beforeButtons = [byId('camera-before-button'), byId('camera-before-non-ios-button')]
-	const afterButtons = [byId('camera-after-button'), byId('camera-after-non-ios-button')]
-
-	for (const button of beforeButtons) {
-		if (beforePhotos.length >= MAX_PHOTOS) {
-			button.disabled = true;
-			show('max-photos-before');
-		} else {
-			button.disabled = processingPhotos || submitting;
-			hide('max-photos-before')
-		}
+function checkDisableAddPhoto() {
+	if (beforePhotos.length >= MAX_PHOTOS) {
+		byId('camera-before-button').disabled = true;
+		byId('camera-before-non-ios-button').disabled = true;
+		show('max-photos-before');
+	} else {
+		byId('camera-before-button').disabled = false;
+		byId('camera-before-non-ios-button').disabled = false;
+		hide('max-photos-before');
 	}
-
-	for (const button of afterButtons) {
-		if (afterPhotos.length >= MAX_PHOTOS) {
-			button.disabled = true;
-			show('max-photos-after');
-		} else {
-			button.disabled = processingPhotos || submitting;
-			hide('max-photos-after')
-		}
+	if (afterPhotos.length >= MAX_PHOTOS) {
+		byId('camera-after-button').disabled = true;
+		byId('camera-after-non-ios-button').disabled = true;
+		show('max-photos-after');
+	} else {
+		byId('camera-after-button').disabled = false;
+		byId('camera-after-non-ios-button').disabled = false;
+		hide('max-photos-after');
 	}
-	byId('submitButton').disabled = processingPhotos || submitting;
 }
 
-// A single guard covers both selections; files are processed sequentially.
-async function addPhotos(input, photos, thumbnailsId) {
+function createImage(file) {
+	const image = document.createElement('img');
+	image.src = URL.createObjectURL(file);
+	image.alt = file.name;
+	return image;
+}
+
+function createThumbnail(image) {
+	const thumbnail = document.createElement('div');
+	thumbnail.append(image);
+	return thumbnail;
+}
+
+function createDeletePhoto(thumbnail, image, file, photoList) {
+	const deletePhoto = document.createElement('button');
+	deletePhoto.type = 'button';
+	deletePhoto.textContent = '×';
+	deletePhoto.setAttribute('aria-label', `Delete`);
+	deletePhoto.onclick = () => {
+		photoList.splice(photoList.indexOf(file), 1);
+		URL.revokeObjectURL(image.src);
+		thumbnail.remove();
+		checkDisableAddPhoto();
+	};
+	return deletePhoto;
+}
+
+async function addPhoto(source, photoList, thumbnailsId) {
+	const { optimizePhoto, PHOTO_OPTIONS } = await photoTools;
+	const file = await optimizePhoto(source, PHOTO_OPTIONS);
+	photoList.push(file);
+	const image = createImage(file)
+	const thumbnail = createThumbnail(image);
+	const deletePhoto = createDeletePhoto(thumbnail, image, file, photoList)
+	thumbnail.append(deletePhoto);
+	byId(thumbnailsId).appendChild(thumbnail);
+}
+async function addPhotos(input, photoList, thumbnailsId) {
 	const files = Array.from(input.files);
 	input.value = '';
-	if (processingPhotos || submitting) return;
-	processingPhotos = true;
-	checkPhotoLimit();
+
+	toggleLoading(true);
 	try {
 		for (const source of files) {
-			if (photos.length >= MAX_PHOTOS) break;
-			const thumbnail = document.createElement('div');
-			const remove = document.createElement('button');
-			remove.type = 'button';
-			remove.textContent = '×';
-			remove.setAttribute('aria-label', `Remove ${source.name}`);
+			if (photoList.length >= MAX_PHOTOS) break;
 			try {
-				const { optimizePhoto, PHOTO_OPTIONS } = await photoTools;
-				const file = await optimizePhoto(source, PHOTO_OPTIONS);
-				const image = document.createElement('img');
-				image.src = URL.createObjectURL(file);
-				image.alt = file.name;
-				photos.push(file);
-				thumbnail.append(image);
-				remove.onclick = () => {
-					if (submitting) return;
-					photos.splice(photos.indexOf(file), 1);
-					URL.revokeObjectURL(image.src);
-					thumbnail.remove();
-					checkPhotoLimit();
-				};
+				await addPhoto(source, photoList, thumbnailsId);
 			} catch (error) {
-				const message = document.createElement('p');
-				message.setAttribute('role', 'alert');
-				message.textContent = `${source.name}: ${error.message}`;
-				thumbnail.append(message);
-				remove.onclick = () => thumbnail.remove();
+				alert(`${source.name}: ${error.message}`);
 			}
-			thumbnail.append(remove);
-			byId(thumbnailsId).appendChild(thumbnail);
 		}
 	} finally {
-		processingPhotos = false;
-		checkPhotoLimit();
+		toggleLoading(false);
+		checkDisableAddPhoto();
 	}
 }
 
@@ -294,11 +277,8 @@ function openPhotosAfter(inputId) {
 	input.click()
 }
 
-async function registerVolunteer() {
-
-	showLoading()
-
-	const response = await fetch('/.netlify/functions/register-volunteer', {
+async function updateVolunteerSheet() {
+	const response = await fetch('/register-volunteer', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
@@ -308,28 +288,32 @@ async function registerVolunteer() {
 		})
 	});
 
+	const newVolunteer = await response.json().catch(() => ({}));
 	if (!response.ok) {
-		throw new Error('Could not register volunteer');
+		throw new Error('Registration failed')
+	};
+	const newVolunteerList = await getVolunteers();
+	if (!newVolunteerList.includes(newVolunteer.name)) {
+		throw new Error("Registration didn't go through.");
 	}
+	return { newVolunteer, newVolunteerList };
+}
 
-	const volunteer = await response.json();
-	const volunteerList = await getVolunteers();
-
-	addSuggestedOptions(
-		'volunteer-name',
-		'volunteer-name-suggestions',
-		volunteerList,
-		newVolunteer
-		);
-
-	if (!volunteerList.includes(volunteer.name)) {
-		throw new Error('Registered, but could not refresh their name');
+async function registerVolunteer() {
+	toggleLoading(true)
+	try {
+		const { newVolunteer, newVolunteerList } = await updateVolunteerSheet();
+		addSuggestedVolunteers(newVolunteerList);
+		const input = byId('volunteer-name');
+		input.value = newVolunteer.name;
+		input.dataset.selectedName = newVolunteer.name;
+		input.setCustomValidity('');
+		cancelNewVolunteer();
+	} catch (error) {
+		alert(error.message);
+	} finally {
+		toggleLoading(false)
 	}
-
-	byId('new-volunteer-cancel').click();
-	byId('volunteer-name').value = volunteer.name;
-
-	hide('loading-indicator')
 }
 
 // stolen from codepen
@@ -346,72 +330,50 @@ function celebrate() {
 	}).catch(console.error);
 }
 
+checkValidEmail('new-volunteer-email')
+setSuggestedOptions();
+
 form.addEventListener('submit', async event => {
 	event.preventDefault();
+	if (!form.reportValidity()) return;
+	toggleLoading(true);
+	const formData = new FormData(form);
 
-	if (processingPhotos || submitting || !form.reportValidity()) return;
-	submitting = true;
-	checkPhotoLimit();
-
-	showLoading();
-
+	// we don't need to check whether the brand exists or not
+	for (const photo of beforePhotos) {
+		formData.append('before-photos', photo)
+	};
+	for (const photo of afterPhotos) {
+		formData.append('after-photos', photo)
+	};
 	try {
-		const formData = new FormData(form);
-
-		const products = await getProductTypes();
-		const brands = await getBrandNames();
-
-		const product = formData.get('product-type').trim().toLowerCase();
-		const brand = formData.get('brand-name').trim().toLowerCase();
-
-		const productExists = products.some(name => name.trim().toLowerCase() === product);
-		const brandExists = brands.some(name => name.trim().toLowerCase() === brand);
-
-		formData.set('product-status', productExists ? 'existing' : 'new');
-		formData.set('brand-status', brand ? (brandExists ? 'existing' : 'new') : '');
-
-		for (const photo of beforePhotos) formData.append('beforePhotos', photo);
-		for (const photo of afterPhotos) formData.append('afterPhotos', photo);
-
-		const response = await fetch('/api', {
+		const response = await fetch('/submit', {
 			method: 'POST',
 			body: formData
 		});
+		const result = await response.json().catch(() => ({}));
+		if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
+		if (!result.ok) throw new Error(result.error || 'Error from server.');
 
-		const result = await response.json();
-
-		if (!response.ok || !result.ok) {
-			throw new Error(result.error || 'Could not submit repair');
-		}
-
-		const volunteerName = byId('volunteer-name').value;
-
-		form.reset();
-		byId('volunteer-name').value = volunteerName;
-
+		// reset but keep volunteer name
 		for (const image of document.querySelectorAll('.thumbnails img')) {
 			URL.revokeObjectURL(image.src);
 		}
 		beforePhotos = [];
 		afterPhotos = [];
-		checkPhotoLimit();
 		byId('before-thumbnails').innerHTML = '';
 		byId('after-thumbnails').innerHTML = '';
-
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth'
-		});
+		// save the volunteer name before resetting
+		const volunteerName = byId('volunteer-name').value;
+		form.reset();
+		// then insert back into the DOM
+		byId('volunteer-name').value = volunteerName;
+		window.scrollTo({top: 0, behavior: 'smooth'});
 		celebrate();
 	} catch (error) {
 		alert(error.message);
 	} finally {
-		submitting = false;
-		checkPhotoLimit();
-		hide('loading-indicator');
+		toggleLoading(false);
+		checkDisableAddPhoto();
 	}
-});
-
-checkValidEmail('new-volunteer-email')
-// setCategories();
-setSuggestedOptions();
+})
