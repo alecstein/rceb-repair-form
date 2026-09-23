@@ -73,10 +73,11 @@ export async function saveRepair(repairRecord, beforeLinks, afterLinks) {
       return photoCells[header];
     }
 
-    if (
-      !Object.hasOwn(repairRecord, header) ||
-      repairRecord[header] == null
-    ) {
+    if (!Object.hasOwn(repairRecord, header)) {
+      return sheetCell('');
+    }
+
+    if (repairRecord[header] == null) {
       throw new Error(
         'No value configured for repair sheet header "' +
         header +

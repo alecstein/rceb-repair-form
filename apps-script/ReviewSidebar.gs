@@ -1,6 +1,6 @@
 // written by an LLM
 
-const REVIEW_SHEET = 'FormOverview';
+const REVIEW_SHEET = 'RawData';
 const HEADER_ROW = 1;
 const FIRST_DATA_ROW = 2;
 

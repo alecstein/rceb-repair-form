@@ -57,20 +57,8 @@ export default async request => {
       [VOLUNTEER_COLUMNS.email]: email
     };
 
-    const cells = headers.map(header => {
-      if (
-        !Object.hasOwn(volunteerRecord, header) ||
-        volunteerRecord[header] == null
-      ) {
-        throw new Error(
-          'No value configured for volunteer sheet header "' +
-          header +
-          '".'
-        );
-      }
-
-      return sheetCell(volunteerRecord[header]);
-    });
+    // Keep extra sheet columns, such as Note, blank.
+    const cells = headers.map(header => sheetCell(volunteerRecord[header] ?? ''));
 
     await appendSheetCells(spreadsheetId, sheetName, cells);
 
